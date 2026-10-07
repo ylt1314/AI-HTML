@@ -1,0 +1,3304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>品类季节独立预测与库存平衡模型 - 杨良涛</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS 处理 Excel 4表导入与导出 -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js 绘制走势与对比图 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .sticky-col-first {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+    }
+
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans overflow-hidden select-text" id="mainBody">
+
+  <!-- ==================== 1. 账号与密码登录验证门禁 ==================== -->
+  <div id="loginAuthOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 bg-cover bg-center bg-no-repeat" style="background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75)), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2160&auto=format&fit=crop');">
+    <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/40 w-full max-w-md p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 font-black text-xl">
+          S&OP
+        </div>
+        <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">品类季节独立预测与库存平衡模型</h2>
+        <p class="text-xs text-slate-500">企业级鞋服商品计划与库存平衡决策系统</p>
+      </div>
+
+      <!-- 提示信息条 -->
+      <div class="bg-sky-50 border border-sky-200 rounded-xl p-3 text-xs text-sky-800 flex items-start space-x-2">
+        <svg class="w-4 h-4 text-sky-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="space-y-0.5">
+          <div class="font-bold">系统访问受限，请输入凭证：</div>
+          <div class="text-slate-600">管理员账号：<span class="font-mono font-bold text-sky-700">14599</span> 或 <span class="font-mono font-bold text-sky-700">10211</span></div>
+        </div>
+      </div>
+
+      <!-- 登录表单 -->
+      <form id="loginForm" class="space-y-4" onsubmit="handleLoginSubmit(event)">
+        <!-- 访问账号 (下拉框方式) -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-700" for="usernameInput">访问账号 (Username)</label>
+          <div class="relative">
+            <select id="usernameInput" required 
+              class="w-full pl-9 pr-9 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition cursor-pointer appearance-none">
+              <option value="" disabled selected>请选择登录账号...</option>
+              <option value="14599">14599 (管理员)</option>
+              <option value="10211">10211 (管理员)</option>
+            </select>
+            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <svg class="w-4 h-4 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- 访问密码 (保持输入框不变) -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-700" for="passwordInput">访问密码 (Password)</label>
+          <div class="relative">
+            <input type="password" id="passwordInput" required placeholder="请输入访问密码..." 
+              class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition" autocomplete="current-password">
+            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+        </div>
+
+        <div id="loginErrorMessage" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 p-2 rounded-lg font-medium text-center">
+          账号或密码输入有误，请重新输入！
+        </div>
+
+        <button type="submit" class="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white text-xs font-bold rounded-lg shadow-md shadow-sky-600/25 transition-all select-none">
+          立即验证并进入系统
+        </button>
+      </form>
+
+      <div class="text-center text-[11px] text-slate-400">
+        系统专属标记：杨良涛 · 滚动预测与库存平衡模型
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 2. 主系统工作区 ==================== -->
+
+  <!-- 顶部导航栏 -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20 font-black text-sm select-none">
+            S&OP
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">品类季节独立预测与库存平衡模型</h1>
+              <span class="px-2 py-0.5 text-[11px] font-semibold bg-sky-100 text-sky-800 rounded-full border border-sky-200">
+                同期对齐 · 月度发货分解
+              </span>
+              <span class="px-2 py-0.5 text-[11px] font-bold bg-slate-100 text-slate-700 rounded-full border border-slate-300">
+                制表：杨良涛
+              </span>
+            </div>
+            <p class="text-xs text-slate-500">品类/季节/单绒里独立预测 · 预计发货量 = 去年同期 × (1+预计增长率) · 预估实际发货量 = 预计发货量 × (1-退货率)</p>
+          </div>
+        </div>
+
+        <!-- 动作按钮区与退出登录 -->
+        <div class="flex items-center space-x-2 select-none">
+          <button id="btnDownloadTemplate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-200">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            下载Excel模板
+          </button>
+
+          <label for="excelFileInput" class="cursor-pointer inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-sky-700 bg-sky-50 hover:bg-sky-100 transition-colors border border-sky-200">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            上传Excel数据
+          </label>
+          <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" />
+
+          <button id="btnExportResult" class="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition-colors">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            导出预测分析表
+          </button>
+
+          <button id="btnResetData" title="重置恢复默认数据" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
+
+          <button id="btnLogoutBtn" title="锁定/退出系统" class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors ml-1">
+            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            退出
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主体工作区 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5 flex-1 w-full">
+
+    <!-- 业务逻辑公式提示条 -->
+    <div class="bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 text-white rounded-2xl p-4 shadow-md border border-slate-800">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-start space-x-3">
+          <div class="p-2 bg-sky-500/20 rounded-lg border border-sky-400/30 text-sky-300 shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="font-semibold text-sky-200">鞋服季节性预测算法 & 发货/库存平衡模型逻辑：</div>
+            <div class="text-slate-300 flex flex-wrap gap-x-4 gap-y-1">
+              <span>• <strong class="text-sky-300 font-mono">当月预计发货量</strong> = 去年同期真实销量 × (1 + 自填预计增长率)</span>
+              <span>• <strong class="text-emerald-300 font-mono">较同期净增减</strong> = 当月预计发货量 − 去年同期实际销量</span>
+              <span>• <strong class="text-indigo-300 font-mono">预估实际发货量</strong> = 预计发货量总计 × (1 - 退货率)</span>
+              <span>• <strong class="text-teal-300 font-mono">在仓售罄率</strong> = 期间销量 ÷ (在仓库存 + 期间销量)</span>
+              <span>• <strong class="text-teal-200 font-mono">总售罄率</strong> = 期间销量 ÷ (总库存 + 期间销量) [春夏取3-8月，秋冬取9-次年2月]</span>
+              <span>• <strong class="text-amber-300 font-mono">库存溢出差额</strong> = 季末目标库存 - (总库存 - 预估实际发货量)</span>
+              <span>• <strong class="text-rose-300 font-mono">未走完月份联动</strong>：天数精准对齐同期 + 余期发货量 = 剩余天数 × 近3天平均日发</span>
+            </div>
+          </div>
+        </div>
+        <div class="text-right shrink-0 select-none">
+          <span class="inline-flex items-center text-xs text-slate-200 font-medium">
+            <span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block mr-1.5 animate-pulse"></span>
+            当前统计维度：
+            <span id="activeDimensionLabel" class="font-extrabold ml-1.5 bg-sky-100 text-sky-900 border border-sky-300 px-3 py-1 rounded-lg shadow-sm">
+              季节独立预测统计
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 维度独立分开统计 Tab 切换栏 -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-200 pb-3 select-none">
+      <div class="inline-flex p-1.5 bg-slate-200/80 rounded-xl gap-2" id="dimensionTabGroup">
+        <button data-dim="品类" class="dim-tab-btn px-4 py-2 text-xs rounded-lg transition-all flex items-center border">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          按【品类】独立分开统计
+        </button>
+        <button data-dim="季节" class="dim-tab-btn px-4 py-2 text-xs rounded-lg transition-all flex items-center border">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          按【季节】独立分开统计
+        </button>
+        <button data-dim="单里/绒里" class="dim-tab-btn px-4 py-2 text-xs rounded-lg transition-all flex items-center border">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+          </svg>
+          按【单里/绒里】独立分开统计
+        </button>
+      </div>
+
+      <div class="flex items-center space-x-2 text-xs bg-amber-50/70 px-3 py-1.5 rounded-lg border border-amber-200">
+        <span class="text-amber-900 font-medium">季末目标预填：</span>
+        <input type="number" id="batchTargetInput" placeholder="数值" value="500" class="w-20 px-2 py-1 text-xs border border-amber-300 rounded bg-white text-right font-bold text-amber-900">
+        <button id="btnBatchApplyFixed" class="px-2 py-1 text-xs font-medium bg-amber-200/80 hover:bg-amber-300 text-amber-950 rounded transition">批量固定值</button>
+        <button id="btnBatchApplyRatio" class="px-2 py-1 text-xs font-medium bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded transition">按总库存25%预填</button>
+      </div>
+    </div>
+
+    <!-- 下拉切片器与退货率控制面板 -->
+    <section class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center select-none">
+          <svg class="w-4 h-4 mr-2 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          </svg>
+          多维数据下拉切片器 & 预测控制参数
+        </h3>
+        <button id="btnClearFilters" class="text-xs text-sky-600 hover:text-sky-800 font-medium select-none">重置所有切片筛选</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <div class="space-y-1">
+          <label for="seasonSelect" class="text-xs font-semibold text-slate-600 select-none">季节切片 (Season)</label>
+          <select id="seasonSelect" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white transition">
+            <option value="全部">全部季节 (ALL)</option>
+          </select>
+        </div>
+
+        <!-- 升级：包含二级类目外层与四级类目内层的层级多选切片器 -->
+        <div class="space-y-1 relative" id="categorySlicerWrapper">
+          <label class="text-xs font-semibold text-slate-600 flex justify-between items-center select-none">
+            <span>四级类目切片 (含二级分组多选)</span>
+            <span id="categorySelectAllBtn" class="text-[10px] text-sky-600 hover:text-sky-800 font-bold cursor-pointer">全选</span>
+          </label>
+          <div class="relative">
+            <button type="button" id="categoryMultiBtn" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-left flex items-center justify-between focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white transition shadow-sm select-none">
+              <span id="categoryMultiBtnText" class="truncate font-medium">全部品类 (ALL)</span>
+              <svg class="w-3.5 h-3.5 ml-1 text-slate-400 shrink-0 transform transition-transform" id="categoryChevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div id="categoryDropdownPanel" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-40 p-2.5 space-y-1.5 max-h-72 overflow-y-auto select-none min-w-[240px]">
+              <div class="flex items-center justify-between pb-1.5 mb-1 border-b border-slate-100 text-[11px]">
+                <button type="button" id="btnSelectAllCats" class="text-sky-600 hover:text-sky-800 font-semibold">全选</button>
+                <button type="button" id="btnInverseCats" class="text-slate-500 hover:text-slate-800">反选</button>
+                <button type="button" id="btnClearCats" class="text-rose-500 hover:text-rose-700">清空</button>
+              </div>
+              <div id="categoryCheckboxesList" class="space-y-1.5"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label for="liningSelect" class="text-xs font-semibold text-slate-600 select-none">单里/绒里切片 (Lining)</label>
+          <select id="liningSelect" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white transition">
+            <option value="全部">全部 (单里/绒里)</option>
+          </select>
+        </div>
+
+        <div class="space-y-1">
+          <label for="horizonSelect" class="text-xs font-semibold text-slate-600 select-none">滚动预测期数</label>
+          <select id="horizonSelect" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white transition">
+            <option value="2">未来 2 个月</option>
+            <option value="3" selected>未来 3 个月 (一季度)</option>
+            <option value="4">未来 4 个月</option>
+            <option value="6">未来 6 个月 (半年)</option>
+          </select>
+        </div>
+
+        <div class="space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-200">
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-600 select-none">
+            <span>退货率设置 (0-1)</span>
+            <div class="flex items-center space-x-1">
+              <input type="number" id="returnRateInput" min="0" max="100" step="0.5" value="18.0" 
+                class="w-14 px-1.5 py-0.5 text-xs text-right font-bold text-sky-700 bg-white border border-slate-300 rounded focus:outline-none">
+              <span class="text-slate-500">%</span>
+            </div>
+          </div>
+          <input type="range" id="returnRateSlider" min="0" max="100" step="0.5" value="18.0" 
+            class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600">
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-dashed border-slate-200 flex flex-wrap items-center gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200 select-none" id="monthlyGrowthControlBar"></div>
+    </section>
+
+    <!-- 顶部 KPI 卡片看板 -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 select-text">
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+        <div class="text-[11px] font-semibold text-slate-500">预计发货量总计</div>
+        <div id="kpiForecastSales" class="text-lg sm:text-xl font-bold text-slate-900 mt-1">0</div>
+        <div class="text-[10px] text-sky-600 mt-0.5">含余期补发 + 各月增长量</div>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+        <div class="text-[11px] font-semibold text-slate-500">预估实际发货量</div>
+        <div id="kpiActualShipments" class="text-lg sm:text-xl font-bold text-indigo-600 mt-1">0</div>
+        <div class="text-[10px] text-indigo-500 mt-0.5">预计发货量 × (1 - 退货率)</div>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+        <div class="text-[11px] font-semibold text-slate-500">当前总库存</div>
+        <div id="kpiTotalStock" class="text-lg sm:text-xl font-bold text-slate-900 mt-1">0</div>
+        <div id="kpiStockDetail" class="text-[10px] text-slate-400 mt-0.5">仓 0 / 途 0</div>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+        <div class="text-[11px] font-bold text-amber-800 flex items-center justify-between">
+          <span>季末目标库存</span>
+          <span class="text-[9px] bg-amber-100 text-amber-900 px-1 py-0.2 rounded font-normal select-none">自填汇总</span>
+        </div>
+        <div id="kpiTargetStock" class="text-lg sm:text-xl font-extrabold text-amber-700 mt-1">0</div>
+        <div class="text-[10px] text-amber-600/80 mt-0.5">各维度自填底线目标</div>
+      </div>
+
+      <div class="bg-rose-50/80 p-3.5 rounded-xl border border-rose-200 shadow-sm">
+        <div class="text-[11px] font-bold text-rose-800 flex items-center justify-between">
+          <span>🚨 库存溢出积压总量</span>
+          <span id="kpiOverflowCount" class="text-[10px] bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded font-bold select-none">0 项溢出</span>
+        </div>
+        <div id="kpiOverflowQty" class="text-lg sm:text-xl font-black text-rose-600 mt-1">0</div>
+        <div class="text-[10px] text-rose-600/90 mt-0.5">剩余库存超过目标(差额&lt;0)</div>
+      </div>
+
+      <div class="bg-amber-50/80 p-3.5 rounded-xl border border-amber-200 shadow-sm">
+        <div class="text-[11px] font-bold text-amber-800 flex items-center justify-between">
+          <span>⚡ 库存缺货需补总量</span>
+          <span id="kpiShortageCount" class="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold select-none">0 项缺货</span>
+        </div>
+        <div id="kpiShortageQty" class="text-lg sm:text-xl font-black text-amber-600 mt-1">0</div>
+        <div class="text-[10px] text-amber-700/90 mt-0.5">剩余库存低于目标(差额&gt;0)</div>
+      </div>
+    </section>
+
+    <!-- 可视化与统计分析支撑区域 -->
+    <section class="space-y-5">
+      <!-- 按月统计分析表 (支持任意框选复制) -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+          <div>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center select-none">
+              <span class="w-2.5 h-2.5 rounded bg-sky-600 inline-block mr-2"></span>
+              按月统计分析表 (月度发货分解与同期对比)
+            </h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">较同期净增减 = 当月预计发货量 − 去年同期实际销量；单击月份可秒级调取全盘月度同比及品类发货预测明细（支持划词框选复制）</p>
+          </div>
+          <div class="flex items-center space-x-2 text-xs select-text">
+            <span class="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-medium shadow-xs">
+              <svg class="w-3.5 h-3.5 mr-1.5 text-sky-600 select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              数据更新时间：
+              <span id="dataUpdateLatestDate" class="font-mono font-bold text-sky-700 ml-1">2026-09-26</span>
+            </span>
+            <span id="unfinishedMonthBadge" class="hidden px-2 py-1 text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-lg"></span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto select-text">
+          <table class="w-full text-left text-xs border-collapse" id="monthlyAnalysisTable">
+            <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 select-none">
+              <tr>
+                <th class="py-2.5 px-3 font-bold min-w-[125px]">
+                  预测自然月份 <span class="text-[10px] font-normal text-sky-700">(单击弹窗)</span>
+                </th>
+                <th class="py-2.5 px-3 font-semibold text-slate-500">去年同期月份</th>
+                <th class="py-2.5 px-3 text-right font-semibold text-slate-600 min-w-[140px]">去年同期实际销量 (件)</th>
+                <th class="py-2.5 px-3 text-center font-bold text-sky-800 bg-sky-100/60 min-w-[145px]">
+                  预计增长率%<br><span class="text-[10px] text-sky-600 font-normal">✎敏捷调节·实时同步</span>
+                </th>
+                <th class="py-2.5 px-3 text-right font-bold text-sky-900 bg-sky-100/50">当月预计发货量 (件)</th>
+                <th class="py-2.5 px-3 text-center font-semibold text-slate-500">预估退货率</th>
+                <th class="py-2.5 px-3 text-right font-semibold text-slate-500">预估退货件数 (件)</th>
+                <th class="py-2.5 px-3 text-right font-black text-indigo-700 bg-indigo-50/60">预估实际发货量 (件)</th>
+                <th class="py-2.5 px-3 text-right font-bold text-slate-800 min-w-[110px]">较同期净增减 (件)</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyAnalysisTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+            <tfoot id="monthlyAnalysisTableFoot" class="bg-slate-100/95 font-bold border-t-2 border-slate-300"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- 第一行独立图表: 季节性历史发货 vs 滚动预测走势 -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+          <div>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center select-none">
+              <span class="w-2.5 h-2.5 rounded bg-sky-500 inline-block mr-2"></span>
+              月度历史发货量 vs 滚动预测季节性发货走势
+            </h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">X轴统一展示近13个月历史发货及增速，预测期同轴并列对比去年同期发货量、今年预估发货量与预估实际发货量（单位: 件 / %）</p>
+          </div>
+          <span class="text-[11px] px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-100 rounded-lg font-medium select-none" id="chartTimeSpanBadge">
+            近13月历史走势 + 滚动预测并轨
+          </span>
+        </div>
+        <div class="relative w-full h-[300px]">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 第二行独立图表: 当前维度库存平衡与溢出分析 -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+          <div>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center select-none">
+              <span class="w-2.5 h-2.5 rounded bg-indigo-500 inline-block mr-2"></span>
+              当前维度库存平衡与溢出分析
+            </h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">多柱对比总库存、预估实际发货量、自填季末目标库存与差额（水平轴仅展示四级类目，单位: 件）</p>
+          </div>
+          <div class="flex items-center space-x-3 text-[11px] text-slate-500 select-none">
+            <span class="flex items-center"><span class="w-2 h-2 rounded bg-rose-500 inline-block mr-1"></span> 红色：溢出差额 &lt; 0</span>
+            <span class="flex items-center"><span class="w-2 h-2 rounded bg-emerald-500 inline-block mr-1"></span> 绿色：溢出差额 &ge; 0</span>
+          </div>
+        </div>
+        <div class="relative w-full h-[280px]">
+          <canvas id="balanceChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- 滚动预测明细大表 (支持任意框选复制) -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden select-text">
+      <div class="p-4 border-b border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <h3 class="text-sm font-bold text-slate-800 flex items-center select-none">
+            <svg class="w-4 h-4 mr-2 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <span id="currentTableTitle">品类独立预测与库存平衡分析表</span>
+          </h3>
+          <span id="itemCountBadge" class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-medium select-none">共 0 项</span>
+        </div>
+
+        <div class="text-xs text-slate-500 flex items-center space-x-2">
+          <span>💡 提示：<strong class="text-sky-700 underline cursor-pointer">单击四级类目/字段名称</strong> 可弹窗查看历史同比增速；在仓售罄率与总售罄率已按所选/所属季节自动统计。</span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-[580px]">
+        <table class="w-full text-left text-xs border-collapse" id="dimensionDetailTable">
+          <thead class="bg-slate-100 text-slate-700 sticky top-0 z-20 shadow-sm border-b border-slate-200 select-none" id="tableHeader"></thead>
+          <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          <tfoot id="tableFoot" class="bg-slate-100/95 font-bold border-t-2 border-slate-300 sticky bottom-0 z-20"></tfoot>
+        </table>
+      </div>
+
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
+        <div class="flex items-center space-x-4 select-none">
+          <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block mr-1"></span> 红色：库存溢出/积压 (溢出差额 &lt; 0)</span>
+          <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block mr-1"></span> 黄色：库存不足/缺货需补 (溢出差额 &gt; 0)</span>
+          <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block mr-1"></span> 绿色：供需与目标平衡</span>
+        </div>
+        <div class="text-slate-500 font-mono">
+          计算公式：在仓售罄 = 期间销量 ÷ (在仓库存 + 期间销量) | 总售罄 = 期间销量 ÷ (总库存 + 期间销量) [春夏取3-8月，秋冬取9-次年2月] | 溢出差额 = 季末目标库存 - (总库存 - 预估实际发货量)
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 弹窗：单击对应字段/月份展示销售历史与同比增速 Modal -->
+  <div id="yoyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100 select-text">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-base select-none">
+            📊
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900" id="modalFieldTitle">销售历史与同比增速分析</h3>
+            <p class="text-xs text-slate-500 mt-0.5" id="modalFieldSubtitle">展示 2025 全年、2026 年累计销量及天数精准对齐之同比增速 YoY%</p>
+          </div>
+        </div>
+        <button id="btnCloseModal" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors select-none">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-5 overflow-y-auto flex-1">
+        <!-- 概览卡片 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="text-[11px] text-slate-500 font-medium">2025 全年总销量</div>
+            <div class="text-base sm:text-lg font-bold text-slate-900 mt-0.5" id="modalMetric2025Full">0 件</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">2025.01 ~ 2025.12</div>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="text-[11px] text-slate-500 font-medium">2026 年累计销量</div>
+            <div class="text-base sm:text-lg font-bold text-indigo-700 mt-0.5" id="modalMetric2026Cum">0 件</div>
+            <div class="text-[10px] text-indigo-500 mt-0.5" id="modalMetric2026CumSub">截至最新导入日</div>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="text-[11px] text-slate-500 font-medium">2025 同期累计销量</div>
+            <div class="text-base sm:text-lg font-bold text-slate-600 mt-0.5" id="modalMetric2025Cum">0 件</div>
+            <div class="text-[10px] text-slate-500 font-semibold mt-0.5" id="modalMetric2025CumSub">天数精准对齐</div>
+          </div>
+          <div class="bg-sky-50 p-3 rounded-xl border border-sky-200">
+            <div class="text-[11px] text-sky-800 font-medium">2026 累计同比增速</div>
+            <div class="text-base sm:text-lg font-black text-sky-700 mt-0.5" id="modalMetricCumYoY">+0.0%</div>
+            <div class="text-[10px] text-sky-600 mt-0.5">相同天数口径对齐</div>
+          </div>
+        </div>
+
+        <!-- 弹窗内部走势图 -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200">
+          <div class="text-xs font-bold text-slate-800 mb-2 flex items-center justify-between">
+            <span>📈 各月销量对比与同比增速曲线</span>
+            <span class="text-[11px] text-slate-400 font-normal">柱：当期 vs 同期 (件) | 线：同比增速 (%)</span>
+          </div>
+          <div class="relative h-56 w-full">
+            <canvas id="modalYoYChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 近1年分月同比详细表格 -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div class="p-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-800 flex justify-between items-center">
+            <span>每月销量及同比明细表</span>
+            <span class="text-[11px] font-normal text-slate-500">当期月未走完时自动提取同期相同天数真实基准</span>
+          </div>
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 select-none">
+              <tr>
+                <th class="py-2.5 px-3 font-semibold">自然月份</th>
+                <th class="py-2.5 px-3 text-right font-semibold">当期实际销量 (件)</th>
+                <th class="py-2.5 px-3 text-right font-semibold text-slate-500">上年同期销量 (件)</th>
+                <th class="py-2.5 px-3 text-right font-semibold">同比增减量</th>
+                <th class="py-2.5 px-3 text-right font-semibold">同比增速 (YoY%)</th>
+                <th class="py-2.5 px-3 text-center font-semibold">增速趋势状态</th>
+              </tr>
+            </thead>
+            <tbody id="modalYoYTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+
+        <!-- 所点击月份在各品类下的发货预测与同期对照明细 -->
+        <div id="modalMonthCategoryBreakdownSection" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm hidden">
+          <div class="p-2.5 bg-sky-50 border-b border-sky-200 font-bold text-xs text-sky-900 flex justify-between items-center">
+            <span id="modalMonthBreakdownTitle">【所选月份】各品类销售历史与发货预测明细</span>
+            <span class="text-[11px] font-normal text-sky-700">较同期净增减 = 当月预计发货量 − 去年同期实际销量</span>
+          </div>
+          <div class="overflow-x-auto max-h-72">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 sticky top-0 z-10 select-none">
+                <tr>
+                  <th class="py-2.5 px-3 font-semibold min-w-[85px]">二级类目</th>
+                  <th class="py-2.5 px-3 font-semibold min-w-[95px]">四级类目</th>
+                  <th class="py-2.5 px-3 text-right font-semibold text-slate-600 min-w-[125px]">去年同期实销 (件)</th>
+                  <th class="py-2.5 px-3 text-center font-semibold text-sky-800 min-w-[95px]">预计增长率</th>
+                  <th class="py-2.5 px-3 text-right font-bold text-sky-900 min-w-[120px]">当月预计发货量 (件)</th>
+                  <th class="py-2.5 px-3 text-right font-bold text-indigo-700 min-w-[120px]">预估实际发货量 (件)</th>
+                  <th class="py-2.5 px-3 text-right font-bold text-slate-800 min-w-[110px]">较同期净增减 (件)</th>
+                </tr>
+              </thead>
+              <tbody id="modalMonthCategoryTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
+        <span>较同期净增减 = 当月预计发货量 − 去年同期实际销量 (支持鼠标框选复制文本)</span>
+        <button id="btnModalCloseSecondary" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition select-none">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 操作通知 Toast -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none select-none">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2.5 border border-slate-700 text-xs">
+      <span id="toastIcon">✓</span>
+      <span id="toastMessage" class="font-medium"></span>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * 品类季节独立预测与库存平衡模型 - 杨良涛
+     */
+
+    let appState = {
+      currentDimension: '季节',
+      returnRate: 0.18,
+      forecastHorizonMonths: 3,
+      filterSeason: '全部',
+      filterCategories: [],
+      filterLining: '全部',
+
+      baseInfo: [],
+      inventory: [],
+      sales: [],
+      calendar: [],
+
+      forecastMonths: ['2026-10', '2026-11', '2026-12'],
+
+      defaultMonthlyGrowth: {
+        '2026-10': 0.10,
+        '2026-11': 0.25,
+        '2026-12': 0.05
+      },
+
+      userConfig: {
+        '品类': {},
+        '季节': {},
+        '单里/绒里': {}
+      },
+
+      currentDimItems: [],
+
+      fastAggIndex: {
+        salesMonthlyAgg: {},
+        salesMonthlyDayAgg: {},
+        totalMonthlyAgg: {},
+        totalMonthlyDayAgg: {},
+        dateTotals: {},
+        itemDateTotals: {},
+        latestSalesDate: '2026-09-26',
+        unfinishedInfo: null
+      }
+    };
+
+    let trendChartInstance = null;
+    let balanceChartInstance = null;
+    let modalChartInstance = null;
+
+    /**
+     * ================= 1. 登录验证逻辑 =================
+     */
+    const VALID_ACCOUNTS = {
+      '14599': '888888',
+      '10211': 'abc@10211'
+    };
+
+    function checkAuthOnLoad() {
+      const isAuthed = sessionStorage.getItem('sop_user_authed');
+      const overlay = document.getElementById('loginAuthOverlay');
+      const body = document.getElementById('mainBody');
+
+      if (isAuthed === 'true') {
+        overlay.classList.add('hidden');
+        body.classList.remove('overflow-hidden');
+      } else {
+        overlay.classList.remove('hidden');
+        body.classList.add('overflow-hidden');
+        setTimeout(() => document.getElementById('usernameInput').focus(), 100);
+      }
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const u = document.getElementById('usernameInput').value.trim();
+      const p = document.getElementById('passwordInput').value.trim();
+      const errBox = document.getElementById('loginErrorMessage');
+
+      if (VALID_ACCOUNTS[u] && VALID_ACCOUNTS[u] === p) {
+        errBox.classList.add('hidden');
+        sessionStorage.setItem('sop_user_authed', 'true');
+
+        const overlay = document.getElementById('loginAuthOverlay');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        document.getElementById('mainBody').classList.remove('overflow-hidden');
+
+        setTimeout(() => {
+          overlay.classList.add('hidden');
+          overlay.classList.remove('opacity-0', 'pointer-events-none');
+        }, 300);
+
+        showToast(`验证通过！欢迎进入系统，${u}`);
+      } else {
+        errBox.classList.remove('hidden');
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('passwordInput').focus();
+      }
+    }
+
+    function logoutSystem() {
+      sessionStorage.removeItem('sop_user_authed');
+      const overlay = document.getElementById('loginAuthOverlay');
+      const body = document.getElementById('mainBody');
+      overlay.classList.remove('hidden');
+      body.classList.add('overflow-hidden');
+      document.getElementById('usernameInput').value = '';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('loginErrorMessage').classList.add('hidden');
+      showToast('已安全退出并锁定系统');
+    }
+
+    /**
+     * ================= 2. 极速日期工具 =================
+     */
+    function formatDateToYYYYMMDD(val) {
+      if (!val) return '';
+      if (typeof val === 'number') {
+        const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+        if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+      }
+      const str = String(val).trim();
+      const match = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+      if (match) {
+        return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+      }
+      return str.length >= 10 ? str.slice(0, 10) : str;
+    }
+
+    function getSamePeriodLastYear(ymStr) {
+      const parts = ymStr.split('-');
+      const y = parseInt(parts[0], 10) - 1;
+      return `${y}-${parts[1]}`;
+    }
+
+    /**
+     * ================= 3. 数据规范化与单趟全局哈希构建 =================
+     */
+    function prepareRawSalesData() {
+      const sales = appState.sales;
+      const len = sales.length;
+      for (let i = 0; i < len; i++) {
+        const s = sales[i];
+        if (!s._d) {
+          s._d = formatDateToYYYYMMDD(s["日期"] || s["销售日期"] || s["Date"] || s["成交时间"] || '');
+          s._ym = s._d.length >= 7 ? s._d.slice(0, 7) : '';
+          s._day = s._d.length >= 10 ? parseInt(s._d.slice(8, 10), 10) : 1;
+          s._q = Number(s["销量"]) || 0;
+          s._sku = String(s["货号"] || '').trim();
+        }
+      }
+    }
+
+    function buildFastAggIndex(dimItems, skuToItemKey) {
+      const sales = appState.sales;
+      const len = sales.length;
+
+      const salesMonthlyAgg = {};
+      const salesMonthlyDayAgg = {};
+      const totalMonthlyAgg = {};
+      const totalMonthlyDayAgg = {};
+      const dateTotals = {};
+      const itemDateTotals = {};
+
+      dimItems.forEach(item => {
+        salesMonthlyAgg[item.key] = {};
+        salesMonthlyDayAgg[item.key] = {};
+        itemDateTotals[item.key] = {};
+      });
+
+      let maxDate = '';
+
+      for (let i = 0; i < len; i++) {
+        const row = sales[i];
+        const d = row._d;
+        if (!d || d.length < 7) continue;
+
+        if (d > maxDate) maxDate = d;
+
+        const sku = row._sku;
+        const itemKey = skuToItemKey[sku];
+        if (!itemKey) continue;
+
+        const ym = row._ym;
+        const day = row._day;
+        const q = row._q;
+
+        salesMonthlyAgg[itemKey][ym] = (salesMonthlyAgg[itemKey][ym] || 0) + q;
+        if (!salesMonthlyDayAgg[itemKey][ym]) salesMonthlyDayAgg[itemKey][ym] = {};
+        salesMonthlyDayAgg[itemKey][ym][day] = (salesMonthlyDayAgg[itemKey][ym][day] || 0) + q;
+        itemDateTotals[itemKey][d] = (itemDateTotals[itemKey][d] || 0) + q;
+
+        totalMonthlyAgg[ym] = (totalMonthlyAgg[ym] || 0) + q;
+        if (!totalMonthlyDayAgg[ym]) totalMonthlyDayAgg[ym] = {};
+        totalMonthlyDayAgg[ym][day] = (totalMonthlyDayAgg[ym][day] || 0) + q;
+        dateTotals[d] = (dateTotals[d] || 0) + q;
+      }
+
+      let unfinishedInfo = null;
+      if (maxDate && maxDate !== '暂无数据') {
+        const [yStr, mStr, dStr] = maxDate.split('-');
+        const year = parseInt(yStr, 10);
+        const month = parseInt(mStr, 10);
+        const latestDay = parseInt(dStr, 10);
+        const ym = `${yStr}-${mStr}`;
+        const totalDays = new Date(year, month, 0).getDate();
+        const remainingDays = totalDays - latestDay;
+
+        if (remainingDays > 0) {
+          const allCurMonthDates = Object.keys(dateTotals)
+            .filter(d => d.startsWith(ym) && d <= maxDate)
+            .sort();
+          const last3Dates = allCurMonthDates.slice(-3);
+
+          unfinishedInfo = {
+            latestDateStr: maxDate,
+            year,
+            month,
+            latestDay,
+            totalDays,
+            remainingDays,
+            ym,
+            samePeriodYM: getSamePeriodLastYear(ym),
+            last3Dates: last3Dates.length > 0 ? last3Dates : [maxDate]
+          };
+        }
+      }
+
+      appState.fastAggIndex = {
+        salesMonthlyAgg,
+        salesMonthlyDayAgg,
+        totalMonthlyAgg,
+        totalMonthlyDayAgg,
+        dateTotals,
+        itemDateTotals,
+        latestSalesDate: maxDate || '暂无数据',
+        unfinishedInfo
+      };
+    }
+
+    function getAggSales(dimKey, ym, maxDay = null) {
+      const idx = appState.fastAggIndex;
+      if (dimKey === 'ALL') {
+        if (maxDay === null) return idx.totalMonthlyAgg[ym] || 0;
+        const dayMap = idx.totalMonthlyDayAgg[ym];
+        if (!dayMap) return 0;
+        let s = 0;
+        for (const d in dayMap) {
+          if (Number(d) <= maxDay) s += dayMap[d];
+        }
+        return s;
+      } else {
+        if (maxDay === null) return (idx.salesMonthlyAgg[dimKey] && idx.salesMonthlyAgg[dimKey][ym]) || 0;
+        const dayMap = idx.salesMonthlyDayAgg[dimKey] && idx.salesMonthlyDayAgg[dimKey][ym];
+        if (!dayMap) return 0;
+        let s = 0;
+        for (const d in dayMap) {
+          if (Number(d) <= maxDay) s += dayMap[d];
+        }
+        return s;
+      }
+    }
+
+    function getAggDailyAvg(dimKey, last3Dates) {
+      if (!last3Dates || last3Dates.length === 0) return 0;
+      const idx = appState.fastAggIndex;
+      let tot = 0;
+      if (dimKey === 'ALL') {
+        last3Dates.forEach(d => { tot += (idx.dateTotals[d] || 0); });
+      } else {
+        const map = idx.itemDateTotals[dimKey];
+        if (map) {
+          last3Dates.forEach(d => { tot += (map[d] || 0); });
+        }
+      }
+      return tot / last3Dates.length;
+    }
+
+    /**
+     * ================= 4. 初始化示范数据集 =================
+     */
+    function initDefaultData() {
+      appState.baseInfo = [
+        { "货号": "MB-A01", "季节": "秋季", "二级类目": "靴类", "品类": "马丁靴", "单里/绒里": "单里" },
+        { "货号": "MB-A02", "季节": "秋季", "二级类目": "靴类", "品类": "马丁靴", "单里/绒里": "单里" },
+        { "货号": "MB-W01", "季节": "冬季", "二级类目": "靴类", "品类": "马丁靴", "单里/绒里": "绒里" },
+        { "货号": "MB-W02", "季节": "冬季", "二级类目": "靴类", "品类": "马丁靴", "单里/绒里": "绒里" },
+
+        { "货号": "SN-S01", "季节": "春季", "二级类目": "运动鞋", "品类": "运动鞋", "单里/绒里": "单里" },
+        { "货号": "SN-A01", "季节": "秋季", "二级类目": "运动鞋", "品类": "运动鞋", "单里/绒里": "单里" },
+
+        { "货号": "CH-A01", "季节": "秋季", "二级类目": "靴类", "品类": "切尔西靴", "单里/绒里": "单里" },
+        { "货号": "CH-W01", "季节": "冬季", "二级类目": "靴类", "品类": "切尔西靴", "单里/绒里": "绒里" },
+
+        { "货号": "SW-W01", "季节": "冬季", "二级类目": "靴类", "品类": "雪地靴", "单里/绒里": "绒里" },
+        { "货号": "SW-W02", "季节": "冬季", "二级类目": "靴类", "品类": "雪地靴", "单里/绒里": "绒里" },
+
+        { "货号": "LF-S01", "季节": "春季", "二级类目": "单鞋", "品类": "乐福鞋", "单里/绒里": "单里" },
+        { "货号": "SD-U01", "季节": "夏季", "二级类目": "凉鞋", "品类": "凉鞋", "单里/绒里": "单里" }
+      ];
+
+      appState.inventory = [
+        { "货号": "MB-A01", "在仓库存": 1000, "在途库存": 300, "总库存": 1300 },
+        { "货号": "MB-A02", "在仓库存": 800,  "在途库存": 200, "总库存": 1000 },
+        { "货号": "MB-W01", "在仓库存": 1800, "在途库存": 600, "总库存": 2400 },
+        { "货号": "MB-W02", "在仓库存": 1500, "在途库存": 500, "总库存": 2000 },
+
+        { "货号": "SN-S01", "在仓库存": 700,  "在途库存": 150, "总库存": 850 },
+        { "货号": "SN-A01", "在仓库存": 1200, "在途库存": 350, "总库存": 1550 },
+
+        { "货号": "CH-A01", "在仓库存": 950,  "在途库存": 250, "总库存": 1200 },
+        { "货号": "CH-W01", "在仓库存": 1600, "在途库存": 500, "总库存": 2100 },
+
+        { "货号": "SW-W01", "在仓库存": 2800, "在途库存": 1000, "总库存": 3800 },
+        { "货号": "SW-W02", "在仓库存": 2200, "在途库存": 800,  "总库存": 3000 },
+
+        { "货号": "LF-S01", "在仓库存": 500,  "在途库存": 100,  "总库存": 600 },
+        { "货号": "SD-U01", "在仓库存": 300,  "在途库存": 0,    "总库存": 300 }
+      ];
+
+      appState.sales = [];
+      const skuMonthlyProfile = {
+        "MB-A01": [400, [0.7, 0.6, 0.8, 0.9, 0.8, 0.7, 0.6, 0.8, 1.2, 1.4, 2.0, 1.5]],
+        "MB-A02": [300, [0.6, 0.6, 0.7, 0.8, 0.8, 0.7, 0.6, 0.7, 1.1, 1.3, 1.8, 1.4]],
+        "MB-W01": [500, [1.4, 1.1, 0.6, 0.4, 0.3, 0.2, 0.2, 0.3, 0.8, 1.4, 2.6, 2.2]],
+        "MB-W02": [400, [1.3, 1.0, 0.5, 0.4, 0.3, 0.2, 0.2, 0.3, 0.7, 1.3, 2.4, 2.0]],
+        "SN-S01": [350, [0.8, 0.9, 1.4, 1.5, 1.4, 1.2, 1.0, 1.1, 1.2, 1.1, 1.3, 0.9]],
+        "SN-A01": [420, [0.8, 0.8, 1.2, 1.3, 1.2, 1.1, 0.9, 1.0, 1.4, 1.5, 1.7, 1.2]],
+        "CH-A01": [360, [0.7, 0.6, 0.8, 0.9, 0.8, 0.7, 0.6, 0.8, 1.3, 1.4, 1.9, 1.4]],
+        "CH-W01": [480, [1.5, 1.2, 0.7, 0.4, 0.3, 0.2, 0.3, 0.4, 0.9, 1.5, 2.5, 2.1]],
+        "SW-W01": [650, [1.8, 1.4, 0.4, 0.2, 0.1, 0.1, 0.1, 0.2, 0.6, 1.6, 3.2, 3.5]],
+        "SW-W02": [500, [1.7, 1.3, 0.4, 0.2, 0.1, 0.1, 0.1, 0.2, 0.5, 1.5, 3.0, 3.2]],
+        "LF-S01": [250, [0.6, 0.7, 1.3, 1.5, 1.6, 1.4, 1.2, 1.1, 1.0, 0.9, 0.9, 0.6]],
+        "SD-U01": [220, [0.1, 0.1, 0.4, 0.8, 1.5, 2.0, 2.2, 1.8, 0.6, 0.2, 0.1, 0.0]]
+      };
+
+      const pastMonths = [
+        "2024-09", "2024-10", "2024-11", "2024-12",
+        "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06",
+        "2025-07", "2025-08", "2025-10", "2025-11", "2025-12",
+        "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
+        "2026-07", "2026-08"
+      ];
+
+      Object.keys(skuMonthlyProfile).forEach(sku => {
+        const [baseQty, seasonalFactors] = skuMonthlyProfile[sku];
+        pastMonths.forEach(ym => {
+          const parts = ym.split('-');
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10);
+          const factor = seasonalFactors[month - 1];
+          const yearGrowth = year === 2025 ? 1.08 : (year === 2026 ? 1.21 : 1.0);
+          const mQty = Math.round(baseQty * factor * yearGrowth);
+          appState.sales.push({ "货号": sku, "日期": `${ym}-15`, "销量": mQty, "销售额": mQty * 299 });
+        });
+
+        const factor09 = seasonalFactors[8];
+        const base25_09 = Math.round(baseQty * factor09 * 1.08);
+        const base26_09 = Math.round(baseQty * factor09 * 1.21);
+
+        const qty25_01to26 = Math.round(base25_09 * 0.82);
+        const qty25_27to30 = base25_09 - qty25_01to26;
+
+        appState.sales.push({ "货号": sku, "日期": "2025-09-15", "销量": qty25_01to26, "销售额": qty25_01to26 * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2025-09-28", "销量": qty25_27to30, "销售额": qty25_27to30 * 299 });
+
+        const qty26_01to23 = Math.round(base26_09 * 0.72);
+        const daily26_recent = Math.round((base26_09 * 0.12) / 3);
+
+        appState.sales.push({ "货号": sku, "日期": "2026-09-15", "销量": qty26_01to23, "销售额": qty26_01to23 * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2026-09-24", "销量": daily26_recent, "销售额": daily26_recent * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2026-09-25", "销量": daily26_recent + 2, "销售额": (daily26_recent + 2) * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2026-09-26", "销量": daily26_recent + 1, "销售额": (daily26_recent + 1) * 299 });
+      });
+
+      prepareRawSalesData();
+
+      appState.userConfig['季节'] = {
+        "秋季": { targetStock: 1500 },
+        "冬季": { targetStock: 2500 },
+        "春季": { targetStock: 350 },
+        "夏季": { targetStock: 100 }
+      };
+
+      appState.userConfig['品类'] = {
+        "靴类___马丁靴": { targetStock: 800 },
+        "靴类___雪地靴": { targetStock: 1200 },
+        "运动鞋___运动鞋": { targetStock: 500 },
+        "靴类___切尔西靴": { targetStock: 600 },
+        "单鞋___乐福鞋": { targetStock: 150 },
+        "凉鞋___凉鞋": { targetStock: 50 }
+      };
+
+      appState.userConfig['单里/绒里'] = {
+        "单里": { targetStock: 1800 },
+        "绒里": { targetStock: 2800 }
+      };
+
+      appState.filterCategories = getAllCategoryLeafKeys();
+    }
+
+    /**
+     * ================= 5. 下拉切片器与层级品类组件 =================
+     */
+
+    // 提取 二级类目 -> [四级类目] 树形层级结构
+    function getCategoryHierarchy() {
+      const map = new Map();
+      appState.baseInfo.forEach(b => {
+        const subCat = String(b["二级类目"] || "常规").trim();
+        const cat = String(b["品类"] || "常规").trim();
+        if (!map.has(subCat)) {
+          map.set(subCat, new Set());
+        }
+        map.get(subCat).add(cat);
+      });
+      const res = [];
+      map.forEach((catSet, subCat) => {
+        res.push({
+          subCategory: subCat,
+          categories: Array.from(catSet).sort((a, b) => a.localeCompare(b, 'zh-CN'))
+        });
+      });
+      res.sort((a, b) => a.subCategory.localeCompare(b.subCategory, 'zh-CN'));
+      return res;
+    }
+
+    // 获取所有复合叶子键 (二级类目___四级类目)
+    function getAllCategoryLeafKeys() {
+      const hierarchy = getCategoryHierarchy();
+      const keys = [];
+      hierarchy.forEach(g => {
+        g.categories.forEach(c => {
+          keys.push(`${g.subCategory}___${c}`);
+        });
+      });
+      return keys;
+    }
+
+    // 判断具体四级类目是否在当前勾选范围内
+    function isCategorySelected(subCat, cat) {
+      if (!appState.filterCategories) return true;
+      const key = `${subCat}___${cat}`;
+      return appState.filterCategories.includes(key) || appState.filterCategories.includes(cat);
+    }
+
+    function updateDropdownSlicers() {
+      const getUnique = (arr, key) => ['全部', ...new Set(arr.map(x => x[key]).filter(Boolean))];
+
+      const seasons = getUnique(appState.baseInfo, "季节");
+      const linings = getUnique(appState.baseInfo, "单里/绒里");
+
+      const allKeys = getAllCategoryLeafKeys();
+      if (!appState.filterCategories || appState.filterCategories.length === 0) {
+        appState.filterCategories = [...allKeys];
+      }
+
+      const populate = (elemId, list, curVal) => {
+        const el = document.getElementById(elemId);
+        el.innerHTML = list.map(v => `<option value="${v}" ${v === curVal ? 'selected' : ''}>${v === '全部' ? '全部 ' + el.labels[0].innerText.split(' ')[0] : v}</option>`).join('');
+      };
+
+      populate('seasonSelect', seasons, appState.filterSeason);
+      populate('liningSelect', linings, appState.filterLining);
+
+      renderCategoryMultiSelect();
+    }
+
+    // 核心渲染：外层二级类目 + 内层四级类目 树形多选切片器
+    function renderCategoryMultiSelect() {
+      const container = document.getElementById('categoryCheckboxesList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const hierarchy = getCategoryHierarchy();
+      const allKeys = getAllCategoryLeafKeys();
+
+      hierarchy.forEach(group => {
+        const subCat = group.subCategory;
+        const cats = group.categories;
+
+        const groupDiv = document.createElement('div');
+        groupDiv.className = "category-group rounded-lg border border-slate-200 bg-slate-50/70 overflow-hidden mb-1.5 transition-all";
+
+        const totalChildren = cats.length;
+        const selectedChildren = cats.filter(c => isCategorySelected(subCat, c)).length;
+
+        // 外层：二级类目表头（带全选复选框、折叠指示箭头与选中计数）
+        const headerDiv = document.createElement('div');
+        headerDiv.className = "group-header flex items-center justify-between px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200/80 transition cursor-pointer select-none";
+        headerDiv.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <input type="checkbox" class="subcat-checkbox rounded text-sky-600 focus:ring-sky-500 w-3.5 h-3.5 cursor-pointer" data-subcat="${subCat}">
+            <span class="font-bold text-xs text-slate-800">${subCat}</span>
+          </div>
+          <div class="flex items-center space-x-1.5 text-[11px]">
+            <span class="subcat-badge font-semibold ${selectedChildren === totalChildren ? 'text-sky-700' : (selectedChildren === 0 ? 'text-slate-400' : 'text-amber-700')}">
+              ${selectedChildren}/${totalChildren}
+            </span>
+            <svg class="w-3.5 h-3.5 text-slate-400 transform transition-transform group-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        `;
+
+        const subcatCheckbox = headerDiv.querySelector('.subcat-checkbox');
+        if (selectedChildren === totalChildren && totalChildren > 0) {
+          subcatCheckbox.checked = true;
+          subcatCheckbox.indeterminate = false;
+        } else if (selectedChildren > 0) {
+          subcatCheckbox.checked = false;
+          subcatCheckbox.indeterminate = true;
+        } else {
+          subcatCheckbox.checked = false;
+          subcatCheckbox.indeterminate = false;
+        }
+
+        // 内层：四级类目复选框列表
+        const childrenDiv = document.createElement('div');
+        childrenDiv.className = "group-children px-2.5 py-1.5 space-y-1 bg-white border-t border-slate-100 pl-6";
+
+        cats.forEach(cat => {
+          const key = `${subCat}___${cat}`;
+          const isChecked = isCategorySelected(subCat, cat);
+          const label = document.createElement('label');
+          label.className = "flex items-center space-x-2 py-0.5 hover:bg-sky-50/50 rounded cursor-pointer text-xs text-slate-700 select-none";
+          label.innerHTML = `
+            <input type="checkbox" value="${key}" data-subcat="${subCat}" data-cat="${cat}" class="cat-checkbox rounded text-sky-600 focus:ring-sky-500 w-3.5 h-3.5" ${isChecked ? 'checked' : ''}>
+            <span class="truncate">${cat}</span>
+          `;
+          childrenDiv.appendChild(label);
+        });
+
+        groupDiv.appendChild(headerDiv);
+        groupDiv.appendChild(childrenDiv);
+        container.appendChild(groupDiv);
+
+        // 点击表头折叠/展开子级
+        headerDiv.addEventListener('click', (e) => {
+          if (e.target.closest('.subcat-checkbox')) return;
+          const isCollapsed = childrenDiv.classList.toggle('hidden');
+          const chevron = headerDiv.querySelector('.group-chevron');
+          if (chevron) chevron.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+        });
+
+        // 二级类目复选框点击联动整组四级类目
+        subcatCheckbox.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+        subcatCheckbox.addEventListener('change', (e) => {
+          e.stopPropagation();
+          const checkAll = subcatCheckbox.checked;
+          cats.forEach(cat => {
+            const key = `${subCat}___${cat}`;
+            if (checkAll) {
+              if (!appState.filterCategories.includes(key)) {
+                appState.filterCategories.push(key);
+              }
+            } else {
+              appState.filterCategories = appState.filterCategories.filter(k => k !== key && k !== cat);
+            }
+          });
+          childrenDiv.querySelectorAll('.cat-checkbox').forEach(cb => {
+            cb.checked = checkAll;
+          });
+          subcatCheckbox.indeterminate = false;
+          updateGroupHeaderBadge(groupDiv, subCat, cats);
+          updateCategoryMultiBtnText(allKeys.length);
+          updateModel();
+        });
+
+        // 单个四级类目变动事件
+        childrenDiv.querySelectorAll('.cat-checkbox').forEach(cb => {
+          cb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const key = cb.value;
+            const cat = cb.getAttribute('data-cat');
+            if (cb.checked) {
+              if (!appState.filterCategories.includes(key)) {
+                appState.filterCategories.push(key);
+              }
+            } else {
+              appState.filterCategories = appState.filterCategories.filter(k => k !== key && k !== cat);
+            }
+            updateGroupHeaderBadge(groupDiv, subCat, cats);
+            updateCategoryMultiBtnText(allKeys.length);
+            updateModel();
+          });
+        });
+      });
+
+      updateCategoryMultiBtnText(allKeys.length);
+    }
+
+    // 局部更新二级类目父级复选框与计数徽章
+    function updateGroupHeaderBadge(groupDiv, subCat, cats) {
+      const total = cats.length;
+      const selected = cats.filter(c => isCategorySelected(subCat, c)).length;
+      const subcatCheckbox = groupDiv.querySelector('.subcat-checkbox');
+      const badge = groupDiv.querySelector('.subcat-badge');
+
+      if (subcatCheckbox) {
+        if (selected === total && total > 0) {
+          subcatCheckbox.checked = true;
+          subcatCheckbox.indeterminate = false;
+        } else if (selected > 0) {
+          subcatCheckbox.checked = false;
+          subcatCheckbox.indeterminate = true;
+        } else {
+          subcatCheckbox.checked = false;
+          subcatCheckbox.indeterminate = false;
+        }
+      }
+
+      if (badge) {
+        badge.textContent = `${selected}/${total}`;
+        badge.className = `subcat-badge font-semibold ${selected === total ? 'text-sky-700' : (selected === 0 ? 'text-slate-400' : 'text-amber-700')}`;
+      }
+    }
+
+    // 更新切片器按钮文本及概要信息
+    function updateCategoryMultiBtnText(totalCount) {
+      const btnText = document.getElementById('categoryMultiBtnText');
+      if (!btnText) return;
+      const allKeys = getAllCategoryLeafKeys();
+      const total = totalCount || allKeys.length;
+
+      const hierarchy = getCategoryHierarchy();
+      let selectedLeafCount = 0;
+      const fullySelectedSubCats = [];
+      const partialSelectedCatNames = [];
+
+      hierarchy.forEach(g => {
+        const subCat = g.subCategory;
+        const totalInSub = g.categories.length;
+        const selectedInSub = g.categories.filter(c => isCategorySelected(subCat, c));
+        selectedLeafCount += selectedInSub.length;
+
+        if (selectedInSub.length === totalInSub && totalInSub > 0) {
+          fullySelectedSubCats.push(subCat);
+        } else {
+          selectedInSub.forEach(c => partialSelectedCatNames.push(c));
+        }
+      });
+
+      if (selectedLeafCount === 0) {
+        btnText.textContent = "未选择品类 (0)";
+        btnText.className = "truncate font-medium text-rose-500";
+      } else if (selectedLeafCount === total) {
+        btnText.textContent = `全部品类 (${total})`;
+        btnText.className = "truncate font-medium text-slate-700";
+      } else {
+        const summaryParts = [];
+        if (fullySelectedSubCats.length > 0) {
+          fullySelectedSubCats.forEach(s => summaryParts.push(`${s}(全)`));
+        }
+        if (partialSelectedCatNames.length > 0) {
+          partialSelectedCatNames.forEach(c => summaryParts.push(c));
+        }
+        btnText.textContent = `已选(${selectedLeafCount}): ${summaryParts.join(', ')}`;
+        btnText.className = "truncate font-medium text-sky-700";
+      }
+    }
+
+    function buildMonthlyGrowthBar() {
+      const bar = document.getElementById("monthlyGrowthControlBar");
+      bar.innerHTML = `
+        <div class="flex items-center space-x-1.5 text-xs font-bold text-sky-800">
+          <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+          <span>各月全局预计增长率设置 (推导各月预计发货量)：</span>
+        </div>
+      `;
+
+      appState.forecastMonths.forEach(m => {
+        const rateVal = Math.round((appState.defaultMonthlyGrowth[m] || 0.10) * 100);
+        const div = document.createElement("div");
+        div.className = "inline-flex items-center space-x-1 bg-white px-2 py-1 rounded-lg border border-slate-300 shadow-sm";
+        div.innerHTML = `
+          <span class="text-xs font-semibold text-slate-700 mr-0.5">${m.slice(5)}月:</span>
+          <button type="button" 
+                  class="w-5 h-5 flex items-center justify-center rounded bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-600 hover:text-sky-700 font-black text-xs transition select-none" 
+                  onclick="stepMonthlyRate('${m}', -1)" 
+                  title="减少 1%">
+            -
+          </button>
+          <input type="number" 
+                 class="w-10 px-0.5 text-center text-xs font-bold text-sky-700 bg-transparent outline-none" 
+                 value="${rateVal}" 
+                 step="1" 
+                 data-month="${m}" 
+                 onchange="onGlobalMonthGrowthChange('${m}', this.value)"
+                 onkeydown="if(event.key==='Enter'){this.blur();}">
+          <span class="text-[11px] text-slate-400 font-medium mr-0.5">%</span>
+          <button type="button" 
+                  class="w-5 h-5 flex items-center justify-center rounded bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-600 hover:text-sky-700 font-black text-xs transition select-none" 
+                  onclick="stepMonthlyRate('${m}', 1)" 
+                  title="增加 1%">
+            +
+          </button>
+        `;
+        bar.appendChild(div);
+      });
+    }
+
+    function stepMonthlyRate(month, delta) {
+      let cur = Math.round((appState.defaultMonthlyGrowth[month] || 0.10) * 100);
+      let next = cur + delta;
+      onGlobalMonthGrowthChange(month, next);
+    }
+
+    function onGlobalMonthGrowthChange(month, val) {
+      let r = parseFloat(val);
+      if (isNaN(r)) r = 0;
+      appState.defaultMonthlyGrowth[month] = r / 100;
+
+      Object.keys(appState.userConfig).forEach(dimKey => {
+        if (appState.userConfig[dimKey]) {
+          Object.keys(appState.userConfig[dimKey]).forEach(k => {
+            if (appState.userConfig[dimKey][k].monthlyRates && appState.userConfig[dimKey][k].monthlyRates[month] !== undefined) {
+              delete appState.userConfig[dimKey][k].monthlyRates[month];
+            }
+          });
+        }
+      });
+
+      const topInput = document.querySelector(`#monthlyGrowthControlBar input[data-month="${month}"]`);
+      if (topInput && document.activeElement !== topInput) {
+        topInput.value = Math.round(r);
+      }
+
+      const tableInput = document.querySelector(`.monthly-table-growth-input[data-month="${month}"]`);
+      if (tableInput && document.activeElement !== tableInput) {
+        tableInput.value = parseFloat(r.toFixed(1));
+      }
+
+      updateModel();
+    }
+
+    function onForecastSpanChange(spanCount) {
+      const count = parseInt(spanCount, 10);
+      const allPossibleMonths = ['2026-10', '2026-11', '2026-12', '2027-01', '2027-02', '2027-03'];
+      appState.forecastMonths = allPossibleMonths.slice(0, count);
+
+      appState.forecastMonths.forEach(m => {
+        if (appState.defaultMonthlyGrowth[m] === undefined) {
+          appState.defaultMonthlyGrowth[m] = 0.08;
+        }
+      });
+
+      buildMonthlyGrowthBar();
+      updateModel();
+      showToast(`已切换为未来 ${count} 个月滚动预测`);
+    }
+
+    function updateDimensionTabStyles() {
+      const dim = appState.currentDimension;
+
+      const labelBadge = document.getElementById('activeDimensionLabel');
+      labelBadge.textContent = `${dim}独立预测统计`;
+      labelBadge.className = "font-extrabold ml-1.5 bg-sky-100 text-sky-900 border-2 border-sky-400 px-3 py-1 rounded-lg shadow-sm tracking-wide";
+
+      document.querySelectorAll('.dim-tab-btn').forEach(btn => {
+        const btnDim = btn.getAttribute('data-dim');
+        if (btnDim === dim) {
+          btn.className = "dim-tab-btn px-4 py-2 text-xs rounded-lg transition-all flex items-center bg-sky-100 text-sky-900 border-2 border-sky-400 font-extrabold shadow-sm ring-2 ring-sky-200/60";
+        } else {
+          btn.className = "dim-tab-btn px-4 py-2 text-xs rounded-lg transition-all flex items-center bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 font-semibold";
+        }
+      });
+    }
+
+    /**
+     * ================= 6. 核心多表关联计算与渲染引擎 =================
+     */
+    function updateModel() {
+      const dim = appState.currentDimension;
+      const isCategoryDim = (dim === '品类');
+      updateDimensionTabStyles();
+      document.getElementById('currentTableTitle').textContent = `按【${dim}】独立滚动预测与库存平衡分析表`;
+
+      const filteredBase = appState.baseInfo.filter(b => {
+        if (appState.filterSeason !== '全部' && b["季节"] !== appState.filterSeason) return false;
+        if (appState.filterLining !== '全部' && b["单里/绒里"] !== appState.filterLining) return false;
+        if (appState.filterCategories) {
+          const subCat = String(b["二级类目"] || "常规").trim();
+          const cat = String(b["品类"] || "常规").trim();
+          if (!isCategorySelected(subCat, cat)) return false;
+        }
+        return true;
+      });
+
+      let dimItems = [];
+      const skuToItemKey = {};
+
+      if (isCategoryDim) {
+        const map = new Map();
+        filteredBase.forEach(b => {
+          const subCat = String(b["二级类目"] || "常规").trim();
+          const cat = String(b["品类"] || "常规").trim();
+          const key = `${subCat}___${cat}`;
+          if (!map.has(key)) {
+            map.set(key, {
+              key: key,
+              subCategory: subCat,
+              category: cat,
+              name: cat,
+              displayName: `${subCat} - ${cat}`
+            });
+          }
+          skuToItemKey[String(b["货号"]).trim()] = key;
+        });
+        dimItems = Array.from(map.values());
+        dimItems.sort((a, b) => a.subCategory.localeCompare(b.subCategory, 'zh-CN') || a.category.localeCompare(b.category, 'zh-CN'));
+      } else {
+        const uniqueVals = Array.from(new Set(filteredBase.map(b => b[dim]).filter(Boolean)));
+        dimItems = uniqueVals.map(v => ({
+          key: v,
+          subCategory: '',
+          category: v,
+          name: v,
+          displayName: v
+        }));
+        filteredBase.forEach(b => {
+          skuToItemKey[String(b["货号"]).trim()] = b[dim] || '常规';
+        });
+      }
+
+      appState.currentDimItems = dimItems;
+
+      buildFastAggIndex(dimItems, skuToItemKey);
+      const fastIdx = appState.fastAggIndex;
+      const unfinishedInfo = fastIdx.unfinishedInfo;
+
+      const dateEl = document.getElementById('dataUpdateLatestDate');
+      if (dateEl) dateEl.textContent = fastIdx.latestSalesDate;
+
+      const unfinishedBadge = document.getElementById('unfinishedMonthBadge');
+      if (unfinishedInfo) {
+        unfinishedBadge.classList.remove('hidden');
+        unfinishedBadge.textContent = `⚡ ${unfinishedInfo.ym}仅录入至${unfinishedInfo.latestDay}日，剩余${unfinishedInfo.remainingDays}天已按近3天日均发货联动补齐`;
+      } else {
+        unfinishedBadge.classList.add('hidden');
+      }
+
+      const stockAgg = {};
+      dimItems.forEach(item => { stockAgg[item.key] = { warehouse: 0, inTransit: 0, total: 0 }; });
+
+      appState.inventory.forEach(inv => {
+        const sku = String(inv["货号"]).trim();
+        const key = skuToItemKey[sku];
+        if (key && stockAgg[key]) {
+          const w = Number(inv["在仓库存"]) || 0;
+          const t = Number(inv["在途库存"]) || 0;
+          const tot = inv["总库存"] !== undefined ? Number(inv["总库存"]) : (w + t);
+          stockAgg[key].warehouse += w;
+          stockAgg[key].inTransit += t;
+          stockAgg[key].total += tot;
+        }
+      });
+
+      // 提取货号所属季节属性
+      const skuSeasonMap = {};
+      appState.baseInfo.forEach(b => {
+        const sku = String(b["货号"] || '').trim();
+        if (sku) skuSeasonMap[sku] = b["季节"] || '';
+      });
+
+      const isSeasonSS = (seasonStr) => {
+        if (!seasonStr) return false;
+        const s = String(seasonStr).trim();
+        return /春|夏|SS|S/i.test(s) && !/秋冬|秋|冬|AW|FW/i.test(s);
+      };
+
+      const latestDateStr = fastIdx.latestSalesDate || '2026-09-26';
+      let curYear = 2026;
+      if (latestDateStr && latestDateStr.length >= 4) {
+        curYear = parseInt(latestDateStr.slice(0, 4), 10) || 2026;
+      }
+
+      const ssStart = `${curYear}-03-01`;
+      const ssEnd = `${curYear}-08-31`;
+      const awStart = `${curYear}-09-01`;
+      const nextYear = curYear + 1;
+      const awEnd = `${nextYear}-02-29`;
+
+      // 期间销量聚合
+      const periodSalesAgg = {};
+      dimItems.forEach(item => { periodSalesAgg[item.key] = 0; });
+
+      const salesList = appState.sales;
+      const salesCount = salesList.length;
+      const selectedSeason = appState.filterSeason;
+
+      for (let i = 0; i < salesCount; i++) {
+        const row = salesList[i];
+        const sku = row._sku;
+        const itemKey = skuToItemKey[sku];
+        if (!itemKey || periodSalesAgg[itemKey] === undefined) continue;
+
+        const d = row._d;
+        const q = row._q;
+        if (!d) continue;
+
+        let isSS = false;
+        if (selectedSeason !== '全部') {
+          isSS = isSeasonSS(selectedSeason);
+        } else {
+          isSS = isSeasonSS(skuSeasonMap[sku]);
+        }
+
+        if (isSS) {
+          if (d >= ssStart && d <= ssEnd) {
+            periodSalesAgg[itemKey] += q;
+          }
+        } else {
+          if ((d >= awStart && d <= `${curYear}-12-31`) || (d >= `${nextYear}-01-01` && d <= awEnd)) {
+            periodSalesAgg[itemKey] += q;
+          }
+        }
+      }
+
+      const actualGrowthRefMap = {};
+      dimItems.forEach(item => {
+        const k = item.key;
+        if (unfinishedInfo) {
+          const s2026_aligned = getAggSales(k, unfinishedInfo.ym, unfinishedInfo.latestDay);
+          const s2025_aligned = getAggSales(k, unfinishedInfo.samePeriodYM, unfinishedInfo.latestDay);
+          actualGrowthRefMap[k] = s2025_aligned > 0 ? (s2026_aligned - s2025_aligned) / s2025_aligned : 0.10;
+        } else {
+          const s2026 = getAggSales(k, '2026-09', null);
+          const s2025 = getAggSales(k, '2025-09', null);
+          actualGrowthRefMap[k] = s2025 > 0 ? (s2026 - s2025) / s2025 : 0.12;
+        }
+      });
+
+      renderDynamicTableHeader(dim, isCategoryDim, unfinishedInfo);
+
+      const monthlyStats = {};
+      appState.forecastMonths.forEach(m => {
+        monthlyStats[m] = {
+          samePeriodMonth: getSamePeriodLastYear(m),
+          samePeriodSales: 0,
+          forecastShipment: 0
+        };
+      });
+
+      let unfinishedPeriodStats = null;
+      if (unfinishedInfo) {
+        unfinishedPeriodStats = {
+          label: `${unfinishedInfo.ym} (余${unfinishedInfo.remainingDays}天)`,
+          samePeriodMonth: `${unfinishedInfo.samePeriodYM} (同余期)`,
+          priorRestSales: 0,
+          priorFullSales: 0,
+          forecastShipment: 0
+        };
+      }
+
+      let sumForecastSales = 0;
+      let sumActualShipments = 0;
+      let sumWarehouse = 0;
+      let sumInTransit = 0;
+      let sumTotalStock = 0;
+      let sumTargetStock = 0;
+      let sumOverflowQty = 0;
+      let overflowItemCount = 0;
+      let sumShortageQty = 0;
+      let shortageItemCount = 0;
+      let sumPeriodSales = 0;
+
+      const chartItems = [];
+      let rowsHtml = '';
+
+      const renderRowCells = (item, stk, refGrowthRate, userCfg) => {
+        const dimKey = item.key;
+        const dimName = item.category || item.name;
+
+        let targetStock = userCfg.targetStock;
+        if (targetStock === undefined || targetStock === null) {
+          targetStock = Math.round(stk.total * 0.25);
+          if (!appState.userConfig[dim][dimKey]) appState.userConfig[dim][dimKey] = {};
+          appState.userConfig[dim][dimKey].targetStock = targetStock;
+        }
+
+        let rowForecastTotal = 0;
+        let monthCellsHtml = '';
+
+        if (unfinishedInfo) {
+          const itemDailyAvg = getAggDailyAvg(dimKey, unfinishedInfo.last3Dates);
+          const itemRemainingForecast = Math.round(unfinishedInfo.remainingDays * itemDailyAvg);
+
+          const spFull = getAggSales(dimKey, unfinishedInfo.samePeriodYM, null);
+          const spAligned = getAggSales(dimKey, unfinishedInfo.samePeriodYM, unfinishedInfo.latestDay);
+          const spRest = Math.max(0, spFull - spAligned);
+
+          rowForecastTotal += itemRemainingForecast;
+          if (unfinishedPeriodStats) {
+            unfinishedPeriodStats.priorRestSales += spRest;
+            unfinishedPeriodStats.priorFullSales += spFull;
+            unfinishedPeriodStats.forecastShipment += itemRemainingForecast;
+          }
+
+          monthCellsHtml += `
+            <td class="py-2.5 px-2 text-right font-mono text-slate-500 bg-amber-50/40 border-l border-amber-200">
+              ${spRest.toLocaleString()}
+              <span class="text-[10px] text-slate-400 block font-normal">(全月:${spFull.toLocaleString()})</span>
+            </td>
+            <td class="py-2.5 px-2 text-center font-mono text-amber-800 bg-amber-50/30 text-[11px]">${itemDailyAvg.toFixed(1)}/天</td>
+            <td class="py-2.5 px-2 text-center font-mono font-bold text-amber-900 bg-amber-50/50">${unfinishedInfo.remainingDays} 天</td>
+            <td class="py-2.5 px-2 text-right font-mono font-black text-amber-900 bg-amber-100/60 border-r border-amber-200">${itemRemainingForecast.toLocaleString()}</td>
+          `;
+        }
+
+        appState.forecastMonths.forEach(m => {
+          const samePeriodMonth = getSamePeriodLastYear(m);
+          const samePeriodSales = getAggSales(dimKey, samePeriodMonth, null);
+
+          let growthRate = (userCfg.monthlyRates && userCfg.monthlyRates[m] !== undefined)
+            ? userCfg.monthlyRates[m]
+            : (appState.defaultMonthlyGrowth[m] || 0.10);
+
+          let monthForecastShipment = samePeriodSales > 0 
+            ? Math.round(samePeriodSales * (1 + growthRate))
+            : Math.round(stk.total * 0.15 * (1 + growthRate));
+
+          rowForecastTotal += monthForecastShipment;
+          monthlyStats[m].samePeriodSales += samePeriodSales;
+          monthlyStats[m].forecastShipment += monthForecastShipment;
+
+          const ratePctVal = Math.round(growthRate * 100);
+          const refRateText = (refGrowthRate >= 0 ? '+' : '') + (refGrowthRate * 100).toFixed(1) + '%';
+
+          monthCellsHtml += `
+            <td class="py-2.5 px-2 text-right font-mono text-slate-500 bg-slate-50/60 border-l border-slate-200">${samePeriodSales.toLocaleString()}</td>
+            <td class="py-2.5 px-2 text-center font-mono text-slate-400 text-[11px]">${refRateText}</td>
+            <td class="py-1.5 px-2 text-center bg-sky-50/20 select-none">
+              <input type="number" 
+                     value="${ratePctVal}" 
+                     step="1" 
+                     data-dimkey="${dimKey}" 
+                     data-dimname="${dimName}" 
+                     data-month="${m}" 
+                     class="row-growth-input w-16 px-1.5 py-0.5 text-right font-bold text-sky-700 bg-white border border-sky-300 rounded text-xs focus:ring-1 focus:ring-sky-500 outline-none" 
+                     title="点击修改在${m}的预计增长率" />
+              <span class="text-[11px] text-slate-500">%</span>
+            </td>
+            <td class="py-2.5 px-2 text-right font-mono font-bold text-sky-950 bg-sky-50/40 border-r border-slate-200">${monthForecastShipment.toLocaleString()}</td>
+          `;
+        });
+
+        const actualShipment = Math.round(rowForecastTotal * (1 - appState.returnRate));
+        const estimatedEndingStock = stk.total - actualShipment;
+        const overflowDiff = targetStock - estimatedEndingStock;
+
+        // 计算售罄率
+        const pSales = periodSalesAgg[dimKey] || 0;
+        const whSellDenom = stk.warehouse + pSales;
+        const whSellThroughText = whSellDenom > 0 ? ((pSales / whSellDenom) * 100).toFixed(1) + '%' : '-';
+
+        const totSellDenom = stk.total + pSales;
+        const totSellThroughText = totSellDenom > 0 ? ((pSales / totSellDenom) * 100).toFixed(1) + '%' : '-';
+
+        sumForecastSales += rowForecastTotal;
+        sumActualShipments += actualShipment;
+        sumWarehouse += stk.warehouse;
+        sumInTransit += stk.inTransit;
+        sumTotalStock += stk.total;
+        sumTargetStock += targetStock;
+        sumPeriodSales += pSales;
+
+        if (overflowDiff < 0) {
+          sumOverflowQty += Math.abs(overflowDiff);
+          overflowItemCount++;
+        } else if (overflowDiff > 0) {
+          sumShortageQty += overflowDiff;
+          shortageItemCount++;
+        }
+
+        chartItems.push({
+          name: item.category || item.name,
+          forecastSales: rowForecastTotal,
+          actualShipment,
+          totalStock: stk.total,
+          targetStock,
+          overflowDiff
+        });
+
+        let statusBadge = '';
+        if (overflowDiff < 0) {
+          statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">⚠ 溢出积压 (${Math.abs(overflowDiff)})</span>`;
+        } else if (overflowDiff > 0) {
+          statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">⚡ 缺货需补 (${overflowDiff})</span>`;
+        } else {
+          statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">✔ 达成平衡</span>`;
+        }
+
+        return {
+          rowForecastTotal,
+          actualShipment,
+          estimatedEndingStock,
+          overflowDiff,
+          targetStock,
+          pSales,
+          whSellThroughText,
+          totSellThroughText,
+          monthCellsHtml,
+          statusBadge
+        };
+      };
+
+      if (isCategoryDim) {
+        const subCatGroups = {};
+        dimItems.forEach(item => {
+          if (!subCatGroups[item.subCategory]) subCatGroups[item.subCategory] = [];
+          subCatGroups[item.subCategory].push(item);
+        });
+
+        Object.keys(subCatGroups).forEach(subCatName => {
+          const groupItems = subCatGroups[subCatName];
+
+          let subForecastTotal = 0;
+          let subActualShipment = 0;
+          let subWarehouse = 0;
+          let subInTransit = 0;
+          let subTotalStock = 0;
+          let subTargetStock = 0;
+          let subPeriodSales = 0;
+
+          groupItems.forEach(item => {
+            const dimKey = item.key;
+            const dimName = item.category;
+            const stk = stockAgg[dimKey] || { warehouse: 0, inTransit: 0, total: 0 };
+            const refGrowthRate = actualGrowthRefMap[dimKey];
+            const userCfg = (appState.userConfig[dim] && (appState.userConfig[dim][dimKey] || appState.userConfig[dim][dimName])) || {};
+
+            const calc = renderRowCells(item, stk, refGrowthRate, userCfg);
+
+            subForecastTotal += calc.rowForecastTotal;
+            subActualShipment += calc.actualShipment;
+            subWarehouse += stk.warehouse;
+            subInTransit += stk.inTransit;
+            subTotalStock += stk.total;
+            subTargetStock += calc.targetStock;
+            subPeriodSales += calc.pSales;
+
+            rowsHtml += `
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="py-2.5 px-3 sticky left-0 z-10 bg-white border-r border-slate-200 shadow-sm font-semibold text-slate-700 min-w-[95px]">
+                  <span class="inline-block bg-slate-100 px-2 py-0.5 rounded text-[11px] text-slate-800 font-bold border border-slate-200 select-none">${item.subCategory}</span>
+                </td>
+                <td class="py-2.5 px-3.5 sticky left-[95px] z-10 bg-white border-r border-slate-200 shadow-sm min-w-[115px]">
+                  <button class="dim-name-btn flex items-center group text-left font-bold text-sky-700 hover:text-sky-900 transition-colors" data-dimkey="${dimKey}" data-dimname="${dimName}" title="点击弹窗查看历史同比增速">
+                    <span>${item.category}</span>
+                    <svg class="w-3.5 h-3.5 ml-1 opacity-60 group-hover:opacity-100 text-sky-600 group-hover:translate-x-0.5 transition select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                  </button>
+                </td>
+                ${calc.monthCellsHtml}
+                <td class="py-2.5 px-2 text-right font-black text-sky-950 bg-sky-100/50 font-mono">${calc.rowForecastTotal.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-right font-bold text-indigo-700 bg-indigo-50/40 font-mono">${calc.actualShipment.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${stk.warehouse.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${stk.inTransit.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-right font-black text-slate-900 bg-slate-100/60 font-mono col-total-stock">${stk.total.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-right font-mono font-bold text-teal-800 bg-teal-50/40" title="期间销量: ${calc.pSales.toLocaleString()} 件 | 在仓库存: ${stk.warehouse.toLocaleString()} 件">${calc.whSellThroughText}</td>
+                <td class="py-2.5 px-2 text-right font-mono font-bold text-teal-900 bg-teal-100/40" title="期间销量: ${calc.pSales.toLocaleString()} 件 | 总库存: ${stk.total.toLocaleString()} 件">${calc.totSellThroughText}</td>
+
+                <td class="py-1.5 px-2 text-right bg-amber-50/60 select-none">
+                  <input type="number" 
+                         value="${calc.targetStock}" 
+                         min="0" 
+                         step="50" 
+                         data-dimkey="${dimKey}" 
+                         data-dimname="${dimName}" 
+                         class="target-stock-field w-24 px-2 py-1 text-right text-xs bg-white border border-amber-300 rounded font-bold text-amber-900 shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" 
+                         title="点击输入自定义季末目标库存" />
+                </td>
+
+                <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${calc.estimatedEndingStock.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-right font-mono font-bold ${calc.overflowDiff < 0 ? 'text-rose-600' : (calc.overflowDiff > 0 ? 'text-amber-600' : 'text-emerald-600')}">
+                  ${calc.overflowDiff > 0 ? '+' : ''}${calc.overflowDiff.toLocaleString()}
+                </td>
+                <td class="py-2.5 px-3 text-center">${calc.statusBadge}</td>
+              </tr>
+            `;
+          });
+
+          const subEndingStock = subTotalStock - subActualShipment;
+          const subOverflowDiff = subTargetStock - subEndingStock;
+          const subWhSellDenom = subWarehouse + subPeriodSales;
+          const subWhSellText = subWhSellDenom > 0 ? ((subPeriodSales / subWhSellDenom) * 100).toFixed(1) + '%' : '-';
+          const subTotSellDenom = subTotalStock + subPeriodSales;
+          const subTotSellText = subTotSellDenom > 0 ? ((subPeriodSales / subTotSellDenom) * 100).toFixed(1) + '%' : '-';
+
+          let subStatusBadge = '';
+          if (subOverflowDiff < 0) {
+            subStatusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">⚠ 小计积压 (${Math.abs(subOverflowDiff)})</span>`;
+          } else if (subOverflowDiff > 0) {
+            subStatusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">⚡ 小计缺货 (${subOverflowDiff})</span>`;
+          } else {
+            subStatusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✔ 小计平衡</span>`;
+          }
+
+          const spanMiddleCols = (appState.forecastMonths.length * 4) + (unfinishedInfo ? 4 : 0);
+          rowsHtml += `
+            <tr class="bg-sky-50/60 hover:bg-sky-100/60 font-bold border-y-2 border-sky-200 text-slate-800">
+              <td colspan="2" class="py-2.5 px-3 sticky left-0 z-10 bg-sky-100/90 border-r border-sky-300 shadow-sm text-sky-950 font-black">
+                <span class="inline-flex items-center">
+                  <span class="w-1.5 h-3.5 bg-sky-600 rounded mr-1.5"></span>
+                  【${subCatName}】小计汇总 (${groupItems.length} 项)
+                </span>
+              </td>
+              <td colspan="${spanMiddleCols}" class="py-2 px-2 text-center text-slate-400 font-mono text-[11px] border-r border-slate-200">
+                含余期补发与分月独立预计发货分解
+              </td>
+              <td class="py-2 px-2 text-right font-black text-sky-950 bg-sky-200/40 font-mono">${subForecastTotal.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right font-bold text-indigo-800 bg-indigo-100/40 font-mono">${subActualShipment.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right text-slate-800 font-mono">${subWarehouse.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right text-slate-800 font-mono">${subInTransit.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right font-black text-slate-950 bg-slate-200/50 font-mono">${subTotalStock.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right font-mono font-bold text-teal-800 bg-teal-100/40" title="小计期间销量: ${subPeriodSales.toLocaleString()} 件 | 在仓库存: ${subWarehouse.toLocaleString()} 件">${subWhSellText}</td>
+              <td class="py-2 px-2 text-right font-mono font-bold text-teal-950 bg-teal-100/60" title="小计期间销量: ${subPeriodSales.toLocaleString()} 件 | 总库存: ${subTotalStock.toLocaleString()} 件">${subTotSellText}</td>
+              <td class="py-2 px-2 text-right font-extrabold text-amber-900 bg-amber-100/50 font-mono">${subTargetStock.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right text-slate-800 font-mono">${subEndingStock.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right font-mono font-black ${subOverflowDiff < 0 ? 'text-rose-600' : (subOverflowDiff > 0 ? 'text-amber-600' : 'text-emerald-600')}">
+                ${subOverflowDiff > 0 ? '+' : ''}${subOverflowDiff.toLocaleString()}
+              </td>
+              <td class="py-2 px-3 text-center">${subStatusBadge}</td>
+            </tr>
+          `;
+        });
+
+      } else {
+        dimItems.forEach(item => {
+          const dimKey = item.key;
+          const dimName = item.name;
+          const stk = stockAgg[dimKey] || { warehouse: 0, inTransit: 0, total: 0 };
+          const refGrowthRate = actualGrowthRefMap[dimKey];
+          const userCfg = (appState.userConfig[dim] && appState.userConfig[dim][dimKey]) || {};
+
+          const calc = renderRowCells(item, stk, refGrowthRate, userCfg);
+
+          rowsHtml += `
+            <tr class="hover:bg-slate-50/80 transition-colors">
+              <td class="py-2.5 px-3.5 sticky-col-first bg-white border-r border-slate-200 shadow-sm">
+                <button class="dim-name-btn flex items-center group text-left font-bold text-sky-700 hover:text-sky-900 transition-colors" data-dimkey="${dimKey}" data-dimname="${dimName}" title="点击弹窗查看历史同比增速">
+                  <span>${dimName}</span>
+                  <svg class="w-3.5 h-3.5 ml-1 opacity-60 group-hover:opacity-100 text-sky-600 group-hover:translate-x-0.5 transition select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                  </svg>
+                </button>
+              </td>
+              ${calc.monthCellsHtml}
+              <td class="py-2.5 px-2 text-right font-black text-sky-950 bg-sky-100/50 font-mono">${calc.rowForecastTotal.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-right font-bold text-indigo-700 bg-indigo-50/40 font-mono">${calc.actualShipment.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${stk.warehouse.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${stk.inTransit.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-right font-black text-slate-900 bg-slate-100/60 font-mono col-total-stock">${stk.total.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-right font-mono font-bold text-teal-800 bg-teal-50/40" title="期间销量: ${calc.pSales.toLocaleString()} 件 | 在仓库存: ${stk.warehouse.toLocaleString()} 件">${calc.whSellThroughText}</td>
+              <td class="py-2.5 px-2 text-right font-mono font-bold text-teal-900 bg-teal-100/40" title="期间销量: ${calc.pSales.toLocaleString()} 件 | 总库存: ${stk.total.toLocaleString()} 件">${calc.totSellThroughText}</td>
+
+              <td class="py-1.5 px-2 text-right bg-amber-50/60 select-none">
+                <input type="number" 
+                       value="${calc.targetStock}" 
+                       min="0" 
+                       step="50" 
+                       data-dimkey="${dimKey}" 
+                       data-dimname="${dimName}" 
+                       class="target-stock-field w-24 px-2 py-1 text-right text-xs bg-white border border-amber-300 rounded font-bold text-amber-900 shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" 
+                       title="点击输入自定义季末目标库存" />
+              </td>
+
+              <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${calc.estimatedEndingStock.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-right font-mono font-bold ${calc.overflowDiff < 0 ? 'text-rose-600' : (calc.overflowDiff > 0 ? 'text-amber-600' : 'text-emerald-600')}">
+                ${calc.overflowDiff > 0 ? '+' : ''}${calc.overflowDiff.toLocaleString()}
+              </td>
+              <td class="py-2.5 px-3 text-center">${calc.statusBadge}</td>
+            </tr>
+          `;
+        });
+      }
+
+      document.getElementById('tableBody').innerHTML = rowsHtml;
+
+      renderTableFooter(dimItems.length, sumForecastSales, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, unfinishedInfo, sumPeriodSales);
+      renderMonthlyAnalysisTable(monthlyStats, sumForecastSales, unfinishedPeriodStats);
+
+      document.getElementById('kpiForecastSales').textContent = sumForecastSales.toLocaleString();
+      document.getElementById('kpiActualShipments').textContent = sumActualShipments.toLocaleString();
+      document.getElementById('kpiTotalStock').textContent = sumTotalStock.toLocaleString();
+      document.getElementById('kpiStockDetail').textContent = `在仓: ${sumWarehouse.toLocaleString()} | 在途: ${sumInTransit.toLocaleString()}`;
+      document.getElementById('kpiTargetStock').textContent = sumTargetStock.toLocaleString();
+
+      document.getElementById('kpiOverflowQty').textContent = `${sumOverflowQty.toLocaleString()} 件`;
+      document.getElementById('kpiOverflowCount').textContent = `${overflowItemCount} 个备货项超标`;
+
+      document.getElementById('kpiShortageQty').textContent = `${sumShortageQty.toLocaleString()} 件`;
+      document.getElementById('kpiShortageCount').textContent = `${shortageItemCount} 个货项低于目标`;
+
+      document.getElementById('itemCountBadge').textContent = `共 ${dimItems.length} 项`;
+
+      renderSeasonalTrendChart(dimItems, sumForecastSales);
+      renderStockBalanceChart(chartItems);
+    }
+
+    /**
+     * ================= 7. 按月统计分析表渲染器 =================
+     */
+    function renderMonthlyAnalysisTable(monthlyStats, totalForecast, unfinishedPeriodStats) {
+      const tbody = document.getElementById('monthlyAnalysisTableBody');
+      const tfoot = document.getElementById('monthlyAnalysisTableFoot');
+
+      const activeEl = document.activeElement;
+      const isEditingGrowth = activeEl && activeEl.classList.contains('monthly-table-growth-input');
+      const activeMonth = isEditingGrowth ? activeEl.getAttribute('data-month') : null;
+      const selStart = isEditingGrowth ? activeEl.selectionStart : null;
+      const selEnd = isEditingGrowth ? activeEl.selectionEnd : null;
+
+      let tbodyHtml = '';
+
+      let totPriorSales = 0;
+      let totForecastShipment = 0;
+      let totActualShipment = 0;
+      let totReturnQty = 0;
+
+      let weightedGrowthSum = 0;
+      let totalPriorSalesForWeight = 0;
+
+      if (unfinishedPeriodStats) {
+        const uSpSales = unfinishedPeriodStats.priorRestSales;
+        const uFcShipment = unfinishedPeriodStats.forecastShipment;
+        const uActShipment = Math.round(uFcShipment * (1 - appState.returnRate));
+        const uRetQty = uFcShipment - uActShipment;
+        const uDiffVsPrior = uFcShipment - uSpSales;
+
+        totPriorSales += uSpSales;
+        totForecastShipment += uFcShipment;
+        totActualShipment += uActShipment;
+        totReturnQty += uRetQty;
+
+        tbodyHtml += `
+          <tr class="bg-amber-50/70 hover:bg-amber-100/70 transition-colors font-medium">
+            <td class="py-2.5 px-3 font-mono">
+              <button type="button" 
+                      class="month-modal-btn flex items-center group font-bold text-amber-900 hover:text-amber-950 transition-colors" 
+                      data-month="${unfinishedPeriodStats.label.slice(0, 7)}" 
+                      title="点击弹窗查看当期销量与同期天数对齐明细">
+                <span>${unfinishedPeriodStats.label}</span>
+                <span class="ml-1 px-1 py-0.2 text-[9px] font-bold bg-amber-200 text-amber-900 rounded border border-amber-300 select-none">余期补齐</span>
+              </button>
+            </td>
+            <td class="py-2.5 px-3 font-mono text-slate-500">${unfinishedPeriodStats.samePeriodMonth}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-medium text-slate-700">
+              ${uSpSales.toLocaleString()}
+              <span class="text-[10px] text-slate-400 font-normal ml-1">（全月：${unfinishedPeriodStats.priorFullSales.toLocaleString()}）</span>
+            </td>
+            <td class="py-1.5 px-3 text-center bg-amber-100/40 font-mono text-[11px] text-amber-900 font-bold" title="按本月最近3天日均发货量外推">
+              ⚡ 按近3日均速外推
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono font-black text-amber-950 bg-amber-100/60">${uFcShipment.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-center font-mono text-slate-500">${(appState.returnRate * 100).toFixed(1)}%</td>
+            <td class="py-2.5 px-3 text-right font-mono text-slate-500">${uRetQty.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-black text-indigo-700 bg-indigo-50/50">${uActShipment.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold ${uDiffVsPrior >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+              ${uDiffVsPrior >= 0 ? '+' : ''}${uDiffVsPrior.toLocaleString()}
+            </td>
+          </tr>
+        `;
+      }
+
+      appState.forecastMonths.forEach(m => {
+        const item = monthlyStats[m] || { samePeriodMonth: getSamePeriodLastYear(m), samePeriodSales: 0, forecastShipment: 0 };
+        const priorMonth = item.samePeriodMonth;
+        const spSales = item.samePeriodSales;
+        const fcShipment = item.forecastShipment;
+
+        const curGlobalRate = appState.defaultMonthlyGrowth[m] !== undefined ? appState.defaultMonthlyGrowth[m] : 0.10;
+        const growthRatePct = parseFloat((curGlobalRate * 100).toFixed(1));
+
+        weightedGrowthSum += spSales * curGlobalRate;
+        totalPriorSalesForWeight += spSales;
+
+        const actShipment = Math.round(fcShipment * (1 - appState.returnRate));
+        const retQty = fcShipment - actShipment;
+        const diffVsPrior = fcShipment - spSales;
+
+        totPriorSales += spSales;
+        totForecastShipment += fcShipment;
+        totActualShipment += actShipment;
+        totReturnQty += retQty;
+
+        tbodyHtml += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="py-2.5 px-3 font-mono">
+              <button type="button" 
+                      class="month-modal-btn flex items-center group font-bold text-sky-700 hover:text-sky-900 transition-colors" 
+                      data-month="${m}" 
+                      title="点击弹窗查看【${m}】每月销量及同比明细">
+                <span>${m}</span>
+                <svg class="w-3.5 h-3.5 ml-1 opacity-60 group-hover:opacity-100 text-sky-600 group-hover:translate-x-0.5 transition select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </button>
+            </td>
+            <td class="py-2.5 px-3 font-mono text-slate-500">${priorMonth}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-medium text-slate-700">${spSales.toLocaleString()}</td>
+
+            <td class="py-1.5 px-3 text-center bg-sky-50/40 select-none">
+              <div class="inline-flex items-center justify-center bg-white border border-slate-300 rounded-lg shadow-xs p-0.5 space-x-1">
+                <button type="button" 
+                        class="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-600 hover:text-sky-700 font-black text-xs transition select-none" 
+                        onclick="stepMonthlyRate('${m}', -1)" 
+                        title="减少 1%">
+                  -
+                </button>
+                <input type="number" 
+                       value="${growthRatePct}" 
+                       step="1" 
+                       data-month="${m}" 
+                       class="monthly-table-growth-input w-12 px-0.5 text-center font-bold text-xs text-sky-800 bg-transparent outline-none" 
+                       title="直接输入预计增长率并回车或失焦生效" 
+                       onchange="onGlobalMonthGrowthChange('${m}', this.value)"
+                       onkeydown="if(event.key==='Enter'){this.blur();}" />
+                <span class="text-[11px] text-slate-400 font-medium">%</span>
+                <button type="button" 
+                        class="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-600 hover:text-sky-700 font-black text-xs transition select-none" 
+                        onclick="stepMonthlyRate('${m}', 1)" 
+                        title="增加 1%">
+                  +
+                </button>
+              </div>
+            </td>
+
+            <td class="py-2.5 px-3 text-right font-mono font-black text-sky-900 bg-sky-100/40">${fcShipment.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-center font-mono text-slate-500">${(appState.returnRate * 100).toFixed(1)}%</td>
+            <td class="py-2.5 px-3 text-right font-mono text-slate-500">${retQty.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-black text-indigo-700 bg-indigo-50/50">${actShipment.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold ${diffVsPrior >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+              ${diffVsPrior >= 0 ? '+' : ''}${diffVsPrior.toLocaleString()}
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = tbodyHtml;
+
+      let weightedAvgGrowthRate = 0;
+      if (totalPriorSalesForWeight > 0) {
+        weightedAvgGrowthRate = (weightedGrowthSum / totalPriorSalesForWeight) * 100;
+      } else {
+        const sumRates = appState.forecastMonths.reduce((acc, m) => acc + (appState.defaultMonthlyGrowth[m] || 0.10), 0);
+        weightedAvgGrowthRate = (sumRates / appState.forecastMonths.length) * 100;
+      }
+      const weightedAvgGrowthText = (weightedAvgGrowthRate >= 0 ? '+' : '') + weightedAvgGrowthRate.toFixed(1) + '%';
+      const totDiffVsPrior = totForecastShipment - totPriorSales;
+
+      tfoot.innerHTML = `
+        <tr class="text-slate-800">
+          <td class="py-2.5 px-3 font-bold text-sky-950">全期合计 / 综合</td>
+          <td class="py-2.5 px-3 text-slate-400 font-mono text-[11px]">-</td>
+          <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-800">${totPriorSales.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-center font-mono font-bold text-sky-800 bg-sky-100/70" title="按各月去年同期销量加权汇总预计增长率">
+            ${weightedAvgGrowthText}
+          </td>
+          <td class="py-2.5 px-3 text-right font-mono font-black text-sky-950 bg-sky-100/60">${totForecastShipment.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-center font-mono text-slate-500">${(appState.returnRate * 100).toFixed(1)}%</td>
+          <td class="py-2.5 px-3 text-right font-mono text-slate-600">${totReturnQty.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-black text-indigo-900 bg-indigo-100/50">${totActualShipment.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-black ${totDiffVsPrior >= 0 ? 'text-emerald-700' : 'text-rose-700'}">
+            ${totDiffVsPrior >= 0 ? '+' : ''}${totDiffVsPrior.toLocaleString()}
+          </td>
+        </tr>
+      `;
+
+      if (isEditingGrowth && activeMonth) {
+        const reInput = tbody.querySelector(`.monthly-table-growth-input[data-month="${activeMonth}"]`);
+        if (reInput) {
+          reInput.focus();
+          if (selStart !== null && selEnd !== null) {
+            try { reInput.setSelectionRange(selStart, selEnd); } catch (err) {}
+          }
+        }
+      }
+    }
+
+    /**
+     * ================= 8. 动态多级表头渲染器 =================
+     */
+    function renderDynamicTableHeader(dim, isCategoryDim, unfinishedInfo) {
+      const thead = document.getElementById('tableHeader');
+      let monthHeadersHtml = '';
+
+      if (unfinishedInfo) {
+        monthHeadersHtml += `
+          <th class="py-2.5 px-2 font-bold text-right text-amber-900 bg-amber-50 border-l border-amber-200 min-w-[95px]">
+            ${unfinishedInfo.ym.slice(5)}月余期同期<br><span class="text-[10px] text-amber-700 font-normal">(${unfinishedInfo.samePeriodYM}余期)</span>
+          </th>
+          <th class="py-2.5 px-2 font-bold text-center text-amber-800 bg-amber-50 min-w-[75px]">
+            近3天日均发货<br><span class="text-[10px] text-amber-700 font-normal">(真实跑速)</span>
+          </th>
+          <th class="py-2.5 px-2 font-bold text-center text-amber-900 bg-amber-100/70 min-w-[75px]">
+            剩余天数<br><span class="text-[10px] text-amber-800 font-normal">(${unfinishedInfo.remainingDays}天)</span>
+          </th>
+          <th class="py-2.5 px-2 font-bold text-right text-amber-950 bg-amber-100/90 border-r border-amber-200 min-w-[85px]">
+            余期预计发货<br><span class="text-[10px] text-amber-900 font-normal">剩余天数×日均</span>
+          </th>
+        `;
+      }
+
+      appState.forecastMonths.forEach(m => {
+        const samePeriodMonth = getSamePeriodLastYear(m);
+        monthHeadersHtml += `
+          <th class="py-2.5 px-2 font-bold text-right text-slate-600 bg-slate-100 border-l border-slate-200 min-w-[85px]">
+            ${m.slice(5)}月 同期<br><span class="text-[10px] text-slate-400 font-normal">(${samePeriodMonth})</span>
+          </th>
+          <th class="py-2.5 px-2 font-bold text-center text-slate-500 bg-slate-100 min-w-[75px]" title="以近期实际销量对比去年同期的增长幅度">
+            参考实际增幅<br><span class="text-[10px] text-slate-400 font-normal">(近期YoY)</span>
+          </th>
+          <th class="py-2.5 px-2 font-bold text-center text-sky-800 bg-sky-100/60 min-w-[95px]">
+            预计增长率%<br><span class="text-[10px] text-sky-600 font-normal">✎可自填</span>
+          </th>
+          <th class="py-2.5 px-2 font-bold text-right text-sky-950 bg-sky-100/70 border-r border-slate-200 min-w-[85px]">
+            预计发货量<br><span class="text-[10px] text-sky-700 font-normal">同期×(1+增幅)</span>
+          </th>
+        `;
+      });
+
+      let leadingHeaderHtml = '';
+      if (isCategoryDim) {
+        leadingHeaderHtml = `
+          <th class="py-3 px-3 font-bold sticky left-0 z-20 bg-slate-100 min-w-[95px] border-r border-slate-200 shadow-sm">
+            二级类目
+          </th>
+          <th class="py-3 px-3.5 font-bold sticky left-[95px] z-20 bg-slate-100 min-w-[115px] border-r border-slate-200 shadow-sm">
+            四级类目 <span class="text-[10px] font-normal text-sky-700">(单击弹窗)</span>
+          </th>
+        `;
+      } else {
+        leadingHeaderHtml = `
+          <th class="py-3 px-3.5 font-bold sticky-col-first bg-slate-100 min-w-[110px] border-r border-slate-200 shadow-sm">
+            ${dim}名称 <span class="text-[10px] font-normal text-sky-700">(单击弹窗)</span>
+          </th>
+        `;
+      }
+
+      thead.innerHTML = `
+        <tr>
+          ${leadingHeaderHtml}
+          ${monthHeadersHtml}
+          <th class="py-3 px-2 font-bold text-right text-sky-900 bg-sky-200/50 min-w-[95px]">预计发货量总计</th>
+          <th class="py-3 px-2 font-bold text-right text-indigo-900 bg-indigo-50/80 min-w-[115px]">
+            预估实际发货量<br><span class="text-[10px] font-normal text-indigo-600">发货量×(1-退货率)</span>
+          </th>
+          <th class="py-3 px-2 font-bold text-right min-w-[80px]">在仓库存</th>
+          <th class="py-3 px-2 font-bold text-right min-w-[80px]">在途库存</th>
+          <th class="py-3 px-2 font-bold text-right font-black text-slate-900 bg-slate-200/50 min-w-[90px]">总库存</th>
+          <th class="py-3 px-2 font-bold text-right text-teal-800 bg-teal-50/70 min-w-[95px]" title="在仓售罄率 = 期间销量 ÷ (在仓库存 + 期间销量)&#10;春夏季取3-8月发货销量，秋冬季取9-次年2月发货销量">
+            在仓售罄率<br><span class="text-[10px] font-normal text-teal-600">期间销/(在仓+期间)</span>
+          </th>
+          <th class="py-3 px-2 font-bold text-right text-teal-900 bg-teal-100/70 min-w-[95px]" title="总售罄率 = 期间销量 ÷ (总库存 + 期间销量)&#10;春夏季取3-8月发货销量，秋冬季取9-次年2月发货销量">
+            总售罄率<br><span class="text-[10px] font-normal text-teal-600">期间销/(总库+期间)</span>
+          </th>
+          <th class="py-3 px-2 font-bold text-right text-amber-900 bg-amber-100/70 min-w-[125px]">
+            季末目标库存<br><span class="text-[10px] font-normal text-amber-700">✎可自填</span>
+          </th>
+          <th class="py-3 px-2 font-bold text-right min-w-[95px]">预估季末余量</th>
+          <th class="py-3 px-2 font-bold text-right min-w-[105px]">溢出差额<br><span class="text-[10px] font-normal text-slate-400">目标-(总库-实际发货)</span></th>
+          <th class="py-3 px-3 font-bold text-center min-w-[120px]">库存平衡判断</th>
+        </tr>
+      `;
+    }
+
+    function renderTableFooter(itemCount, sumForecastSales, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, unfinishedInfo, sumPeriodSales) {
+      const tfoot = document.getElementById('tableFoot');
+      const netTotalDiff = sumTargetStock - (sumTotalStock - sumActualShipments);
+      const spanCols = (appState.forecastMonths.length * 4) + (unfinishedInfo ? 4 : 0);
+      const leadingColSpan = isCategoryDim ? 2 : 1;
+
+      const totalWhSellDenom = sumWarehouse + sumPeriodSales;
+      const totalWhSellText = totalWhSellDenom > 0 ? ((sumPeriodSales / totalWhSellDenom) * 100).toFixed(1) + '%' : '-';
+      const totalTotSellDenom = sumTotalStock + sumPeriodSales;
+      const totalTotSellText = totalTotSellDenom > 0 ? ((sumPeriodSales / totalTotSellDenom) * 100).toFixed(1) + '%' : '-';
+
+      tfoot.innerHTML = `
+        <tr class="text-slate-800">
+          <td colspan="${leadingColSpan}" class="py-3 px-3.5 sticky left-0 z-10 bg-slate-100 text-center font-bold border-r border-slate-200">全表汇总合计 (${itemCount} 项)</td>
+          <td colspan="${spanCols}" class="py-3 px-2 text-center text-slate-400 font-mono text-[11px] border-r border-slate-200">
+            已包含当期未走完余期发货预估与全周期滚动预计发货分解
+          </td>
+          <td class="py-3 px-2 text-right font-mono font-black text-sky-950 bg-sky-200/50">${sumForecastSales.toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono text-indigo-900 bg-indigo-100/50">${sumActualShipments.toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono">${sumWarehouse.toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono">${sumInTransit.toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono font-black">${sumTotalStock.toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono font-bold text-teal-800 bg-teal-100/50" title="全表期间销量: ${sumPeriodSales.toLocaleString()} 件 | 在仓库存: ${sumWarehouse.toLocaleString()} 件">${totalWhSellText}</td>
+          <td class="py-3 px-2 text-right font-mono font-bold text-teal-950 bg-teal-100/70" title="全表期间销量: ${sumPeriodSales.toLocaleString()} 件 | 总库存: ${sumTotalStock.toLocaleString()} 件">${totalTotSellText}</td>
+          <td class="py-3 px-2 text-right font-mono font-extrabold text-amber-800 bg-amber-100/60">${sumTargetStock.toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono">${(sumTotalStock - sumActualShipments).toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono font-black ${netTotalDiff < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+            ${netTotalDiff > 0 ? '+' : ''}${netTotalDiff.toLocaleString()}
+          </td>
+          <td class="py-3 px-3 text-center">
+            ${netTotalDiff < 0 ? `<span class="text-rose-700 text-[11px] font-bold">总体积压 ${Math.abs(netTotalDiff).toLocaleString()}</span>` : `<span class="text-emerald-700 text-[11px] font-bold">总体正常平衡</span>`}
+          </td>
+        </tr>
+      `;
+    }
+
+    /**
+     * ================= 9. 极速秒开弹窗引擎 =================
+     */
+    function openYoYModal(dimKey, dimName) {
+      const unfinishedInfo = appState.fastAggIndex.unfinishedInfo;
+      document.getElementById('modalFieldTitle').textContent = `【${dimName}】销售历史与天数对齐同比分析`;
+      document.getElementById('modalFieldSubtitle').textContent = `展示 2025 全年、2026 年累计销量及天数精准对齐之同比增速 YoY%`;
+
+      document.getElementById('modalMonthCategoryBreakdownSection').classList.add('hidden');
+
+      let sales2025Full = 0;
+      for (let i = 1; i <= 12; i++) {
+        const mStr = `2025-${i < 10 ? '0' + i : i}`;
+        sales2025Full += getAggSales(dimKey, mStr, null);
+      }
+
+      let sales2026Cum = 0;
+      let sales2025Cum = 0;
+      const endMonth = unfinishedInfo ? unfinishedInfo.month : 9;
+
+      for (let m = 1; m <= endMonth; m++) {
+        const mStr26 = `2026-${m < 10 ? '0' + m : m}`;
+        const mStr25 = `2025-${m < 10 ? '0' + m : m}`;
+
+        if (unfinishedInfo && m === unfinishedInfo.month) {
+          sales2026Cum += getAggSales(dimKey, mStr26, unfinishedInfo.latestDay);
+          sales2025Cum += getAggSales(dimKey, mStr25, unfinishedInfo.latestDay);
+        } else {
+          sales2026Cum += getAggSales(dimKey, mStr26, null);
+          sales2025Cum += getAggSales(dimKey, mStr25, null);
+        }
+      }
+
+      let cumYoYRate = 0;
+      let cumYoYText = '0.0%';
+      if (sales2025Cum > 0) {
+        cumYoYRate = ((sales2026Cum - sales2025Cum) / sales2025Cum) * 100;
+        cumYoYText = (cumYoYRate >= 0 ? '+' : '') + cumYoYRate.toFixed(1) + '%';
+      }
+
+      document.getElementById('modalMetric2025Full').textContent = `${sales2025Full.toLocaleString()} 件`;
+      document.getElementById('modalMetric2026Cum').textContent = `${sales2026Cum.toLocaleString()} 件`;
+      document.getElementById('modalMetric2025Cum').textContent = `${sales2025Cum.toLocaleString()} 件`;
+
+      if (unfinishedInfo) {
+        document.getElementById('modalMetric2026CumSub').textContent = `2026.01.01 ~ 09.${unfinishedInfo.latestDay}`;
+        document.getElementById('modalMetric2025CumSub').textContent = `2025.01.01 ~ 09.${unfinishedInfo.latestDay} (对齐)`;
+      } else {
+        document.getElementById('modalMetric2026CumSub').textContent = `2026 全期累计`;
+        document.getElementById('modalMetric2025CumSub').textContent = `2025 同期累计`;
+      }
+
+      const cumYoYEl = document.getElementById('modalMetricCumYoY');
+      cumYoYEl.textContent = cumYoYText;
+      cumYoYEl.className = `text-base sm:text-lg font-black mt-0.5 ${cumYoYRate >= 0 ? 'text-emerald-700' : 'text-rose-700'}`;
+
+      const past12Months = [
+        "2025-10", "2025-11", "2025-12",
+        "2026-01", "2026-02", "2026-03",
+        "2026-04", "2026-05", "2026-06",
+        "2026-07", "2026-08", "2026-09"
+      ];
+
+      const chartLabels = [];
+      const currentData = [];
+      const priorData = [];
+      const growthRates = [];
+
+      let tableHtml = '';
+
+      past12Months.forEach(m => {
+        const isThisUnfinished = unfinishedInfo && m === unfinishedInfo.ym;
+        let curSales = 0;
+        let priorSalesAligned = 0;
+        let priorSalesFull = 0;
+
+        if (isThisUnfinished) {
+          curSales = getAggSales(dimKey, m, unfinishedInfo.latestDay);
+          priorSalesAligned = getAggSales(dimKey, unfinishedInfo.samePeriodYM, unfinishedInfo.latestDay);
+          priorSalesFull = getAggSales(dimKey, unfinishedInfo.samePeriodYM, null);
+        } else {
+          curSales = getAggSales(dimKey, m, null);
+          const pMonth = getSamePeriodLastYear(m);
+          priorSalesAligned = getAggSales(dimKey, pMonth, null);
+          priorSalesFull = priorSalesAligned;
+        }
+
+        let diff = curSales - priorSalesAligned;
+        let rate = 0;
+        let rateText = '0.0%';
+
+        if (priorSalesAligned > 0) {
+          rate = ((curSales - priorSalesAligned) / priorSalesAligned) * 100;
+          rateText = (rate >= 0 ? '+' : '') + rate.toFixed(1) + '%';
+        } else if (curSales > 0) {
+          rate = 100;
+          rateText = '+100%';
+        }
+
+        let badgeHtml = '';
+        if (rate > 0) {
+          badgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800">增长放量</span>`;
+        } else if (rate < 0) {
+          badgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-100 text-rose-800">同比收缩</span>`;
+        } else {
+          badgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">同比持平</span>`;
+        }
+
+        chartLabels.push(isThisUnfinished ? `${m}(至${unfinishedInfo.latestDay}日)` : m);
+        currentData.push(curSales);
+        priorData.push(priorSalesAligned);
+        growthRates.push(Number(rate.toFixed(1)));
+
+        tableHtml += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="py-2 px-3 font-semibold font-mono text-slate-800">
+              ${m} ${isThisUnfinished ? `<span class="text-[10px] text-amber-800 bg-amber-100 px-1 py-0.2 rounded font-bold select-none">至${unfinishedInfo.latestDay}日</span>` : ''}
+            </td>
+            <td class="py-2 px-3 text-right font-mono font-bold text-slate-900">${curSales.toLocaleString()}</td>
+            <td class="py-2 px-3 text-right font-mono text-slate-600">
+              ${priorSalesAligned.toLocaleString()}
+              ${isThisUnfinished ? `<span class="text-[10px] text-slate-400 block font-normal">（全月：${priorSalesFull.toLocaleString()}）</span>` : ''}
+            </td>
+            <td class="py-2 px-3 text-right font-mono font-medium ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+              ${diff >= 0 ? '+' : ''}${diff.toLocaleString()}
+            </td>
+            <td class="py-2 px-3 text-right font-mono font-bold ${rate >= 0 ? 'text-emerald-700' : 'text-rose-700'}">
+              ${rateText}
+            </td>
+            <td class="py-2 px-3 text-center">${badgeHtml}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('modalYoYTableBody').innerHTML = tableHtml;
+
+      const modal = document.getElementById('yoyModal');
+      modal.classList.remove('hidden');
+
+      renderModalChart(chartLabels, currentData, priorData, growthRates);
+    }
+
+    function openMonthModal(monthStr) {
+      openYoYModal('ALL', `全盘汇总 · ${monthStr}`);
+
+      const unfinishedInfo = appState.fastAggIndex.unfinishedInfo;
+      const isUnfinishedSelected = (unfinishedInfo && monthStr === unfinishedInfo.ym);
+
+      const breakdownSection = document.getElementById('modalMonthCategoryBreakdownSection');
+      const breakdownTitle = document.getElementById('modalMonthBreakdownTitle');
+      const breakdownTbody = document.getElementById('modalMonthCategoryTableBody');
+
+      breakdownSection.classList.remove('hidden');
+      breakdownTitle.textContent = isUnfinishedSelected 
+        ? `【${monthStr}】未走完余期发货预估与同期天数对齐明细表` 
+        : `【${monthStr}】各品类销售历史与发货预测明细表`;
+
+      const samePeriodMonth = getSamePeriodLastYear(monthStr);
+      const dimItems = appState.currentDimItems || [];
+      let breakdownHtml = '';
+
+      dimItems.forEach(item => {
+        const dimKey = item.key;
+        const subCat = item.subCategory || '-';
+        const catName = item.category || item.name;
+
+        let spSales = 0;
+        let fcShipment = 0;
+        let growthRateText = '';
+
+        if (isUnfinishedSelected) {
+          const spFull = getAggSales(dimKey, unfinishedInfo.samePeriodYM, null);
+          const spAligned = getAggSales(dimKey, unfinishedInfo.samePeriodYM, unfinishedInfo.latestDay);
+          spSales = Math.max(0, spFull - spAligned);
+
+          const itemDailyAvg = getAggDailyAvg(dimKey, unfinishedInfo.last3Dates);
+          fcShipment = Math.round(unfinishedInfo.remainingDays * itemDailyAvg);
+          growthRateText = `${itemDailyAvg.toFixed(1)}/天(余${unfinishedInfo.remainingDays}天)`;
+        } else {
+          spSales = getAggSales(dimKey, samePeriodMonth, null);
+          const userCfg = (appState.userConfig[appState.currentDimension] && appState.userConfig[appState.currentDimension][dimKey]) || {};
+          const growthRate = (userCfg.monthlyRates && userCfg.monthlyRates[monthStr] !== undefined)
+            ? userCfg.monthlyRates[monthStr]
+            : (appState.defaultMonthlyGrowth[monthStr] !== undefined ? appState.defaultMonthlyGrowth[monthStr] : 0.10);
+
+          fcShipment = spSales > 0 ? Math.round(spSales * (1 + growthRate)) : 0;
+          growthRateText = (growthRate >= 0 ? '+' : '') + Math.round(growthRate * 100) + '%';
+        }
+
+        const actShipment = Math.round(fcShipment * (1 - appState.returnRate));
+        const diff = fcShipment - spSales;
+
+        breakdownHtml += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="py-2 px-3 font-semibold text-slate-700">${subCat}</td>
+            <td class="py-2 px-3 font-bold text-sky-800">${catName}</td>
+            <td class="py-2 px-3 text-right font-mono text-slate-600">${spSales.toLocaleString()}</td>
+            <td class="py-2 px-3 text-center font-mono font-bold text-sky-700">${growthRateText}</td>
+            <td class="py-2 px-3 text-right font-mono font-bold text-sky-950">${fcShipment.toLocaleString()}</td>
+            <td class="py-2 px-3 text-right font-mono font-bold text-indigo-700">${actShipment.toLocaleString()}</td>
+            <td class="py-2 px-3 text-right font-mono font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+              ${diff >= 0 ? '+' : ''}${diff.toLocaleString()}
+            </td>
+          </tr>
+        `;
+      });
+
+      breakdownTbody.innerHTML = breakdownHtml;
+    }
+
+    function renderModalChart(labels, currentData, priorData, growthRates) {
+      const ctx = document.getElementById('modalYoYChart').getContext('2d');
+      if (modalChartInstance) {
+        modalChartInstance.data.labels = labels;
+        modalChartInstance.data.datasets[0].data = currentData;
+        modalChartInstance.data.datasets[1].data = priorData;
+        modalChartInstance.data.datasets[2].data = growthRates;
+        modalChartInstance.update('none');
+        return;
+      }
+
+      modalChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '当期销量',
+              data: currentData,
+              backgroundColor: '#38bdf8',
+              borderRadius: 3,
+              yAxisID: 'y'
+            },
+            {
+              label: '同期销量(对齐)',
+              data: priorData,
+              backgroundColor: '#cbd5e1',
+              borderRadius: 3,
+              yAxisID: 'y'
+            },
+            {
+              label: '同比增速 (%)',
+              data: growthRates,
+              type: 'line',
+              borderColor: '#e11d48',
+              backgroundColor: '#e11d48',
+              borderWidth: 2,
+              tension: 0.2,
+              pointRadius: 3.5,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10.5 } } },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              position: 'left',
+              grid: { color: '#f1f5f9' },
+              ticks: { font: { size: 10 } }
+            },
+            y1: {
+              position: 'right',
+              grid: { display: false },
+              ticks: {
+                callback: function(v) { return v + '%'; },
+                font: { size: 10 }
+              }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    /**
+     * ================= 10. 主界面图表渲染 =================
+     */
+    function renderSeasonalTrendChart(dimItems, totalForecastSales) {
+      const ctx = document.getElementById('trendChart').getContext('2d');
+
+      const getFilteredSales = (ym, maxDay = null) => {
+        if (!dimItems || dimItems.length === 0) return 0;
+        let sum = 0;
+        for (let i = 0; i < dimItems.length; i++) {
+          sum += getAggSales(dimItems[i].key, ym, maxDay);
+        }
+        return sum;
+      };
+
+      const unfinishedInfo = appState.fastAggIndex.unfinishedInfo;
+      const latestYM = (unfinishedInfo && unfinishedInfo.ym) || 
+                       (appState.fastAggIndex.latestSalesDate && appState.fastAggIndex.latestSalesDate.slice(0, 7)) || 
+                       '2026-09';
+      const [latestY, latestM] = latestYM.split('-').map(Number);
+
+      const past13Months = [];
+      for (let i = 12; i >= 0; i--) {
+        let m = latestM - i;
+        let y = latestY;
+        while (m <= 0) {
+          m += 12;
+          y -= 1;
+        }
+        past13Months.push(`${y}-${m < 10 ? '0' + m : m}`);
+      }
+
+      const forecastMonths = appState.forecastMonths;
+
+      const labels = [
+        ...past13Months,
+        ...forecastMonths.map(m => `${m} (预测)`)
+      ];
+
+      const lastYearData = [];
+      const forecastData = [];
+      const actualData = [];
+      const growthRatesData = [];
+
+      past13Months.forEach((ym, idx) => {
+        const curSales = getFilteredSales(ym);
+        const spYM = getSamePeriodLastYear(ym);
+        const spSales = getFilteredSales(spYM);
+
+        lastYearData.push(spSales);
+        forecastData.push(curSales);
+
+        if (idx === past13Months.length - 1) {
+          actualData.push(curSales);
+        } else {
+          actualData.push(null);
+        }
+
+        let yoy = 0;
+        if (spSales > 0) {
+          yoy = Number((((curSales - spSales) / spSales) * 100).toFixed(1));
+        }
+        growthRatesData.push(yoy);
+      });
+
+      forecastMonths.forEach(m => {
+        const spYM = getSamePeriodLastYear(m);
+        const spSales = getFilteredSales(spYM);
+        const growthRate = appState.defaultMonthlyGrowth[m] !== undefined ? appState.defaultMonthlyGrowth[m] : 0.10;
+
+        const fcShipment = spSales > 0 ? Math.round(spSales * (1 + growthRate)) : 0;
+        const actShipment = Math.round(fcShipment * (1 - appState.returnRate));
+
+        lastYearData.push(spSales);
+        forecastData.push(fcShipment);
+        actualData.push(actShipment);
+        growthRatesData.push(Number((growthRate * 100).toFixed(1)));
+      });
+
+      if (trendChartInstance && trendChartInstance.data.datasets.length === 4) {
+        trendChartInstance.data.labels = labels;
+        trendChartInstance.data.datasets[0].data = lastYearData;
+        trendChartInstance.data.datasets[1].data = forecastData;
+        trendChartInstance.data.datasets[2].data = actualData;
+        trendChartInstance.data.datasets[3].data = growthRatesData;
+        trendChartInstance.update('none');
+        return;
+      }
+
+      if (trendChartInstance) {
+        trendChartInstance.destroy();
+      }
+
+      trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '去年同期发货量',
+              data: lastYearData,
+              borderColor: '#94a3b8',
+              backgroundColor: 'rgba(148, 163, 184, 0.08)',
+              borderDash: [5, 5],
+              borderWidth: 2,
+              tension: 0.3,
+              pointRadius: 3.5,
+              yAxisID: 'y',
+              fill: false
+            },
+            {
+              label: '今年预估发货量',
+              data: forecastData,
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
+              borderWidth: 2.5,
+              tension: 0.3,
+              pointRadius: 4,
+              yAxisID: 'y',
+              fill: false
+            },
+            {
+              label: '预估实际发货量',
+              data: actualData,
+              borderColor: '#059669',
+              backgroundColor: 'rgba(5, 150, 105, 0.08)',
+              borderWidth: 2,
+              tension: 0.3,
+              pointRadius: 4,
+              yAxisID: 'y',
+              fill: false
+            },
+            {
+              label: '同比增速 (%)',
+              data: growthRatesData,
+              borderColor: '#e11d48',
+              backgroundColor: '#e11d48',
+              borderWidth: 2,
+              tension: 0.25,
+              pointRadius: 3.5,
+              yAxisID: 'y1',
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: {
+            legend: { 
+              position: 'top', 
+              labels: { 
+                boxWidth: 12, 
+                font: { size: 11, weight: 'bold' },
+                padding: 14
+              } 
+            },
+            tooltip: { 
+              mode: 'index', 
+              intersect: false,
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) label += ': ';
+                  if (context.dataset.yAxisID === 'y1') {
+                    return label + (context.raw !== null && context.raw !== undefined ? context.raw + '%' : '-');
+                  } else {
+                    return label + (context.raw !== null && context.raw !== undefined ? Number(context.raw).toLocaleString() + ' 件' : '-');
+                  }
+                }
+              }
+            }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true, 
+              position: 'left',
+              grid: { color: '#f1f5f9' }, 
+              ticks: { font: { size: 10.5 } },
+              title: { display: true, text: '发货量 (件)', font: { size: 10.5 } }
+            },
+            y1: { 
+              position: 'right', 
+              grid: { display: false }, 
+              ticks: { 
+                font: { size: 10.5 },
+                callback: function(v) { return v + '%'; }
+              },
+              title: { display: true, text: '同比增速 (%)', font: { size: 10.5 } }
+            },
+            x: { 
+              grid: { display: false }, 
+              ticks: { font: { size: 10 } } 
+            }
+          }
+        }
+      });
+    }
+
+    function renderStockBalanceChart(chartItems) {
+      const ctx = document.getElementById('balanceChart').getContext('2d');
+
+      const labels = chartItems.map(c => c.name);
+      const totalStockList = chartItems.map(c => c.totalStock);
+      const shipmentList = chartItems.map(c => c.actualShipment);
+      const targetStockList = chartItems.map(c => c.targetStock);
+      const overflowList = chartItems.map(c => c.overflowDiff);
+
+      if (balanceChartInstance) {
+        balanceChartInstance.data.labels = labels;
+        balanceChartInstance.data.datasets[0].data = totalStockList;
+        balanceChartInstance.data.datasets[1].data = shipmentList;
+        balanceChartInstance.data.datasets[2].data = targetStockList;
+        balanceChartInstance.data.datasets[3].data = overflowList;
+        balanceChartInstance.data.datasets[3].backgroundColor = overflowList.map(v => v < 0 ? '#f43f5e' : '#10b981');
+        balanceChartInstance.update('none');
+        return;
+      }
+
+      balanceChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '总库存',
+              data: totalStockList,
+              backgroundColor: '#94a3b8',
+              borderRadius: 4
+            },
+            {
+              label: '预估实际发货量(含余期)',
+              data: shipmentList,
+              backgroundColor: '#818cf8',
+              borderRadius: 4
+            },
+            {
+              label: '季末目标库存(自填)',
+              data: targetStockList,
+              backgroundColor: '#f59e0b',
+              borderRadius: 4
+            },
+            {
+              label: '溢出差额',
+              data: overflowList,
+              backgroundColor: overflowList.map(v => v < 0 ? '#f43f5e' : '#10b981'),
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: {
+            legend: { 
+              position: 'top', 
+              labels: { 
+                boxWidth: 12, 
+                font: { size: 11.5, weight: 'bold' },
+                padding: 14
+              } 
+            },
+            tooltip: {
+              callbacks: {
+                afterLabel: function(context) {
+                  if (context.datasetIndex === 3) {
+                    const val = context.raw;
+                    return val < 0 ? `(⚠ 溢出积压 ${Math.abs(val)})` : `(⚡ 缺货需补 ${val})`;
+                  }
+                  return '';
+                }
+              }
+            }
+          },
+          scales: {
+            y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 } } },
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    /**
+     * ================= 11. 全局交互 =================
+     */
+    function setupEvents() {
+      document.getElementById('dimensionTabGroup').addEventListener('click', (e) => {
+        const btn = e.target.closest('.dim-tab-btn');
+        if (!btn) return;
+        const dim = btn.getAttribute('data-dim');
+        appState.currentDimension = dim;
+        updateModel();
+        showToast(`已切换至按【${dim}】独立分开统计`);
+      });
+
+      document.getElementById('seasonSelect').addEventListener('change', (e) => {
+        appState.filterSeason = e.target.value;
+        updateModel();
+      });
+
+      document.getElementById('liningSelect').addEventListener('change', (e) => {
+        appState.filterLining = e.target.value;
+        updateModel();
+      });
+
+      document.getElementById('horizonSelect').addEventListener('change', (e) => {
+        onForecastSpanChange(e.target.value);
+      });
+
+      const catMultiBtn = document.getElementById('categoryMultiBtn');
+      const catDropdownPanel = document.getElementById('categoryDropdownPanel');
+      const chevron = document.getElementById('categoryChevron');
+
+      catMultiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = catDropdownPanel.classList.toggle('hidden');
+        chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+      });
+
+      document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('categorySlicerWrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+          catDropdownPanel.classList.add('hidden');
+          chevron.style.transform = 'rotate(0deg)';
+        }
+      });
+
+      // 树形层级多选批量设置函数
+      const applyCategorySelection = (keys) => {
+        appState.filterCategories = [...keys];
+        const allKeys = getAllCategoryLeafKeys();
+
+        document.querySelectorAll('.cat-checkbox').forEach(cb => {
+          cb.checked = keys.includes(cb.value);
+        });
+
+        const hierarchy = getCategoryHierarchy();
+        document.querySelectorAll('.category-group').forEach((groupDiv, idx) => {
+          if (hierarchy[idx]) {
+            updateGroupHeaderBadge(groupDiv, hierarchy[idx].subCategory, hierarchy[idx].categories);
+          }
+        });
+
+        updateCategoryMultiBtnText(allKeys.length);
+        updateModel();
+      };
+
+      document.getElementById('btnSelectAllCats').addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyCategorySelection(getAllCategoryLeafKeys());
+        showToast('已全选所有品类');
+      });
+
+      document.getElementById('categorySelectAllBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyCategorySelection(getAllCategoryLeafKeys());
+        showToast('已全选所有品类');
+      });
+
+      document.getElementById('btnClearCats').addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyCategorySelection([]);
+        showToast('已清空品类选择');
+      });
+
+      document.getElementById('btnInverseCats').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const allKeys = getAllCategoryLeafKeys();
+        const inversed = allKeys.filter(k => {
+          const parts = k.split('___');
+          return !isCategorySelected(parts[0], parts[1]);
+        });
+        applyCategorySelection(inversed);
+        showToast('已反选品类');
+      });
+
+      document.getElementById('btnClearFilters').addEventListener('click', () => {
+        appState.filterSeason = '全部';
+        appState.filterLining = '全部';
+        appState.filterCategories = getAllCategoryLeafKeys();
+
+        document.getElementById('seasonSelect').value = '全部';
+        document.getElementById('liningSelect').value = '全部';
+
+        applyCategorySelection(appState.filterCategories);
+        showToast('已重置所有下拉切片筛选');
+      });
+
+      const rateSlider = document.getElementById('returnRateSlider');
+      const rateInput = document.getElementById('returnRateInput');
+
+      rateSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        rateInput.value = val.toFixed(1);
+        appState.returnRate = val / 100.0;
+        updateModel();
+      });
+
+      rateInput.addEventListener('change', (e) => {
+        let val = parseFloat(e.target.value);
+        if (isNaN(val)) val = 18.0;
+        val = Math.max(0, Math.min(100, val));
+        rateInput.value = val.toFixed(1);
+        rateSlider.value = val;
+        appState.returnRate = val / 100.0;
+        updateModel();
+      });
+
+      document.getElementById('btnBatchApplyFixed').addEventListener('click', () => {
+        const val = parseInt(document.getElementById('batchTargetInput').value, 10) || 0;
+        const currentTargetDict = appState.userConfig[appState.currentDimension];
+        document.querySelectorAll('.target-stock-field').forEach(input => {
+          const dimKey = input.getAttribute('data-dimkey');
+          if (!currentTargetDict[dimKey]) currentTargetDict[dimKey] = {};
+          currentTargetDict[dimKey].targetStock = val;
+        });
+        updateModel();
+        showToast(`已批量将当前维度季末目标设为 ${val}`);
+      });
+
+      document.getElementById('btnBatchApplyRatio').addEventListener('click', () => {
+        const trList = document.querySelectorAll('#tableBody tr');
+        trList.forEach(tr => {
+          const btn = tr.querySelector('.dim-name-btn');
+          if (!btn) return;
+          const dimKey = btn.getAttribute('data-dimkey');
+          const totStockEl = tr.querySelector('.col-total-stock');
+          const totStock = totStockEl ? (Number(totStockEl.innerText.replace(/,/g, '')) || 0) : 0;
+          if (!appState.userConfig[appState.currentDimension][dimKey]) {
+            appState.userConfig[appState.currentDimension][dimKey] = {};
+          }
+          appState.userConfig[appState.currentDimension][dimKey].targetStock = Math.round(totStock * 0.25);
+        });
+        updateModel();
+        showToast('已按总库存 25% 比例批量预填季末目标');
+      });
+
+      document.getElementById('monthlyAnalysisTableBody').addEventListener('click', (e) => {
+        const btn = e.target.closest('.month-modal-btn');
+        if (!btn) return;
+        const m = btn.getAttribute('data-month');
+        openMonthModal(m);
+      });
+
+      const tableBody = document.getElementById('tableBody');
+      tableBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('.dim-name-btn');
+        if (!btn) return;
+        const dimKey = btn.getAttribute('data-dimkey');
+        const dimName = btn.getAttribute('data-dimname');
+        openYoYModal(dimKey, dimName);
+      });
+
+      tableBody.addEventListener('change', (e) => {
+        if (e.target.classList.contains('target-stock-field')) {
+          const dimKey = e.target.getAttribute('data-dimkey');
+          const dimName = e.target.getAttribute('data-dimname');
+          let val = parseInt(e.target.value, 10);
+          if (isNaN(val) || val < 0) val = 0;
+          if (!appState.userConfig[appState.currentDimension][dimKey]) {
+            appState.userConfig[appState.currentDimension][dimKey] = {};
+          }
+          appState.userConfig[appState.currentDimension][dimKey].targetStock = val;
+          updateModel();
+          showToast(`【${dimName}】的季末目标已设为 ${val.toLocaleString()}`);
+        } else if (e.target.classList.contains('row-growth-input')) {
+          const dimKey = e.target.getAttribute('data-dimkey');
+          const dimName = e.target.getAttribute('data-dimname');
+          const month = e.target.getAttribute('data-month');
+          let rateVal = parseFloat(e.target.value);
+          if (isNaN(rateVal)) rateVal = 0;
+          if (!appState.userConfig[appState.currentDimension][dimKey]) {
+            appState.userConfig[appState.currentDimension][dimKey] = {};
+          }
+          if (!appState.userConfig[appState.currentDimension][dimKey].monthlyRates) {
+            appState.userConfig[appState.currentDimension][dimKey].monthlyRates = {};
+          }
+          appState.userConfig[appState.currentDimension][dimKey].monthlyRates[month] = rateVal / 100;
+          updateModel();
+          showToast(`【${dimName}】在 ${month.slice(5)}月 的预计增长率已设为 ${rateVal}%`);
+        }
+      });
+
+      const modal = document.getElementById('yoyModal');
+      document.getElementById('btnCloseModal').addEventListener('click', () => { modal.classList.add('hidden'); });
+      document.getElementById('btnModalCloseSecondary').addEventListener('click', () => { modal.classList.add('hidden'); });
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      });
+
+      document.getElementById('btnResetData').addEventListener('click', () => {
+        initDefaultData();
+        updateDropdownSlicers();
+        buildMonthlyGrowthBar();
+        updateModel();
+        showToast('已恢复预设示范数据集');
+      });
+
+      document.getElementById('btnLogoutBtn').addEventListener('click', logoutSystem);
+      document.getElementById('btnDownloadTemplate').addEventListener('click', exportSampleExcelTemplate);
+      document.getElementById('btnExportResult').addEventListener('click', exportCurrentModelExcel);
+      document.getElementById('excelFileInput').addEventListener('change', handleExcelUpload);
+    }
+
+    function exportSampleExcelTemplate() {
+      const wb = XLSX.utils.book_new();
+      const wsBase = XLSX.utils.json_to_sheet(appState.baseInfo);
+      XLSX.utils.book_append_sheet(wb, wsBase, "基础资料表");
+
+      const wsInv = XLSX.utils.json_to_sheet(appState.inventory);
+      XLSX.utils.book_append_sheet(wb, wsInv, "库存数据表");
+
+      const wsSales = XLSX.utils.json_to_sheet(appState.sales.map(s => ({
+        "货号": s["货号"],
+        "日期": s["日期"] || s._d,
+        "销量": s["销量"] || s._q,
+        "销售额": s["销售额"]
+      })));
+      XLSX.utils.book_append_sheet(wb, wsSales, "销售数据表");
+
+      const wsDate = XLSX.utils.json_to_sheet(appState.calendar);
+      XLSX.utils.book_append_sheet(wb, wsDate, "日期表");
+
+      XLSX.writeFile(wb, "品类季节独立预测与库存平衡标准模板_杨良涛.xlsx");
+      showToast('标准4表Excel模板已下载(已包含二级类目列)');
+    }
+
+    /**
+     * ================= 12. 导出预测分析表 =================
+     */
+    function exportCurrentModelExcel() {
+      try {
+        const table = document.getElementById('dimensionDetailTable');
+        if (!table) {
+          showToast('未找到预测分析明细表格');
+          return;
+        }
+
+        const trList = table.querySelectorAll('tbody tr');
+        if (trList.length === 0) {
+          showToast('当前无有效数据可导出');
+          return;
+        }
+
+        const isCategoryDim = (appState.currentDimension === '品类');
+        const unfinishedInfo = appState.fastAggIndex.unfinishedInfo;
+        const rows = [];
+
+        const parseNum = (val) => {
+          if (val === null || val === undefined) return 0;
+          if (typeof val === 'number') return isNaN(val) ? 0 : val;
+          let s = String(val).trim();
+          s = s.replace(/[\(（][^\)）]*[\)）]/g, '');
+          s = s.replace(/[,+ \t\r\n件]/g, '');
+          const n = Number(s);
+          return isNaN(n) ? 0 : n;
+        };
+
+        const cleanStr = (val) => {
+          if (!val) return '';
+          return String(val).replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+        };
+
+        trList.forEach(tr => {
+          const tds = tr.querySelectorAll('td');
+          if (tds.length === 0) return;
+
+          const rowObj = {};
+          const isSubtotalRow = tr.classList.contains('bg-sky-50/60');
+
+          if (isCategoryDim) {
+            if (isSubtotalRow) {
+              const match = tds[0].innerText.match(/【(.*?)】/);
+              rowObj["二级类目"] = match ? match[1] : cleanStr(tds[0].innerText);
+              rowObj["四级类目"] = "【小计汇总】";
+
+              if (unfinishedInfo) {
+                rowObj[`${unfinishedInfo.ym}余期同期销量`] = "-";
+                rowObj[`${unfinishedInfo.ym}近3天日均发货`] = "-";
+                rowObj[`${unfinishedInfo.ym}剩余天数`] = "-";
+                rowObj[`${unfinishedInfo.ym}余期预计发货量`] = "-";
+              }
+
+              appState.forecastMonths.forEach(m => {
+                rowObj[`${m}去年同期`] = "-";
+                rowObj[`${m}参考实际增幅`] = "-";
+                rowObj[`${m}预计增长率`] = "-";
+                rowObj[`${m}预计发货量`] = "-";
+              });
+
+              rowObj["预计发货量总计(含余期)"] = parseNum(tds[2].innerText);
+              rowObj["预估实际发货量"] = parseNum(tds[3].innerText);
+              rowObj["在仓库存"] = parseNum(tds[4].innerText);
+              rowObj["在途库存"] = parseNum(tds[5].innerText);
+              rowObj["总库存"] = parseNum(tds[6].innerText);
+              rowObj["在仓售罄率"] = cleanStr(tds[7].innerText);
+              rowObj["总售罄率"] = cleanStr(tds[8].innerText);
+              rowObj["季末目标库存(自填)"] = parseNum(tds[9].innerText);
+              rowObj["预估季末余量"] = parseNum(tds[10].innerText);
+              rowObj["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tds[11].innerText);
+              rowObj["库存平衡状态"] = cleanStr(tds[12].innerText);
+
+              rows.push(rowObj);
+              return;
+            }
+
+            rowObj["二级类目"] = cleanStr(tds[0].innerText);
+            const catBtn = tr.querySelector('.dim-name-btn span');
+            rowObj["四级类目"] = catBtn ? cleanStr(catBtn.innerText) : cleanStr(tds[1].innerText);
+            var colIdx = 2;
+          } else {
+            const dimBtn = tr.querySelector('.dim-name-btn span');
+            rowObj[appState.currentDimension + "名称"] = dimBtn ? cleanStr(dimBtn.innerText) : cleanStr(tds[0].innerText);
+            var colIdx = 1;
+          }
+
+          if (unfinishedInfo) {
+            rowObj[`${unfinishedInfo.ym}余期同期销量`] = parseNum(tds[colIdx].innerText);
+            rowObj[`${unfinishedInfo.ym}近3天日均发货`] = cleanStr(tds[colIdx + 1].innerText);
+            rowObj[`${unfinishedInfo.ym}剩余天数`] = cleanStr(tds[colIdx + 2].innerText);
+            rowObj[`${unfinishedInfo.ym}余期预计发货量`] = parseNum(tds[colIdx + 3].innerText);
+            colIdx += 4;
+          }
+
+          appState.forecastMonths.forEach(m => {
+            rowObj[`${m}去年同期`] = parseNum(tds[colIdx].innerText);
+            rowObj[`${m}参考实际增幅`] = cleanStr(tds[colIdx + 1].innerText);
+            const input = tds[colIdx + 2].querySelector('input');
+            rowObj[`${m}预计增长率`] = input ? `${input.value}%` : cleanStr(tds[colIdx + 2].innerText);
+            rowObj[`${m}预计发货量`] = parseNum(tds[colIdx + 3].innerText);
+            colIdx += 4;
+          });
+
+          rowObj["预计发货量总计(含余期)"] = parseNum(tds[colIdx].innerText);
+          rowObj["预估实际发货量"] = parseNum(tds[colIdx + 1].innerText);
+          rowObj["在仓库存"] = parseNum(tds[colIdx + 2].innerText);
+          rowObj["在途库存"] = parseNum(tds[colIdx + 3].innerText);
+          rowObj["总库存"] = parseNum(tds[colIdx + 4].innerText);
+          rowObj["在仓售罄率"] = cleanStr(tds[colIdx + 5].innerText);
+          rowObj["总售罄率"] = cleanStr(tds[colIdx + 6].innerText);
+
+          const targetInput = tds[colIdx + 7].querySelector('input');
+          rowObj["季末目标库存(自填)"] = targetInput ? parseNum(targetInput.value) : parseNum(tds[colIdx + 7].innerText);
+          rowObj["预估季末余量"] = parseNum(tds[colIdx + 8].innerText);
+          rowObj["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tds[colIdx + 9].innerText);
+          rowObj["库存平衡状态"] = cleanStr(tds[colIdx + 10].innerText);
+
+          rows.push(rowObj);
+        });
+
+        const tfootTr = table.querySelector('tfoot tr');
+        if (tfootTr) {
+          const tTds = tfootTr.querySelectorAll('td');
+          if (tTds.length >= 13) {
+            const rowTotal = {};
+            if (isCategoryDim) {
+              rowTotal["二级类目"] = cleanStr(tTds[0].innerText) || "全表汇总合计";
+              rowTotal["四级类目"] = "-";
+            } else {
+              rowTotal[appState.currentDimension + "名称"] = cleanStr(tTds[0].innerText) || "全表汇总合计";
+            }
+
+            if (unfinishedInfo) {
+              rowTotal[`${unfinishedInfo.ym}余期同期销量`] = "-";
+              rowTotal[`${unfinishedInfo.ym}近3天日均发货`] = "-";
+              rowTotal[`${unfinishedInfo.ym}剩余天数`] = "-";
+              rowTotal[`${unfinishedInfo.ym}余期预计发货量`] = "-";
+            }
+
+            appState.forecastMonths.forEach(m => {
+              rowTotal[`${m}去年同期`] = "-";
+              rowTotal[`${m}参考实际增幅`] = "-";
+              rowTotal[`${m}预计增长率`] = "-";
+              rowTotal[`${m}预计发货量`] = "-";
+            });
+
+            rowTotal["预计发货量总计(含余期)"] = parseNum(tTds[2].innerText);
+            rowTotal["预估实际发货量"] = parseNum(tTds[3].innerText);
+            rowTotal["在仓库存"] = parseNum(tTds[4].innerText);
+            rowTotal["在途库存"] = parseNum(tTds[5].innerText);
+            rowTotal["总库存"] = parseNum(tTds[6].innerText);
+            rowTotal["在仓售罄率"] = cleanStr(tTds[7].innerText);
+            rowTotal["总售罄率"] = cleanStr(tTds[8].innerText);
+            rowTotal["季末目标库存(自填)"] = parseNum(tTds[9].innerText);
+            rowTotal["预估季末余量"] = parseNum(tTds[10].innerText);
+            rowTotal["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tTds[11].innerText);
+            rowTotal["库存平衡状态"] = cleanStr(tTds[12].innerText);
+
+            rows.push(rowTotal);
+          }
+        }
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows);
+
+        const rawSheetName = `按${appState.currentDimension}独立预测`;
+        const safeSheetName = rawSheetName.replace(/[\\/?*:[\]]/g, '_').slice(0, 31);
+
+        XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+        XLSX.writeFile(wb, `品类季节独立预测与库存平衡报表_杨良涛_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        showToast('预测与平衡分析表已成功导出为Excel');
+      } catch (err) {
+        console.error('导出Excel失败:', err);
+        showToast('导出Excel失败，请查看控制台日志');
+      }
+    }
+
+    function handleExcelUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetNames = workbook.SheetNames;
+
+          const matchSheet = (keys) => sheetNames.find(s => keys.some(k => s.includes(k)));
+
+          const sBase = matchSheet(["基础资料表", "商品资料表", "基础", "商品"]);
+          const sInv = matchSheet(["库存数据表", "库存"]);
+          const sSales = matchSheet(["销售数据表", "销售"]);
+          const sDate = matchSheet(["日期表", "日期", "时间"]);
+
+          if (!sBase) {
+            alert('上传的Excel中未识别到【基础资料表】或【商品资料表】，请确认包含表头：货号、季节、二级类目、品类(或四级类目)、单里/绒里！');
+            return;
+          }
+
+          const rawBase = XLSX.utils.sheet_to_json(workbook.Sheets[sBase]);
+          appState.baseInfo = rawBase.map(item => {
+            if (item["二级分类"] && !item["二级类目"]) item["二级类目"] = item["二级分类"];
+            if (!item["品类"]) item["品类"] = item["四级类目"] || item["四级分类"] || item["品类名称"];
+            return item;
+          });
+
+          if (sInv) appState.inventory = XLSX.utils.sheet_to_json(workbook.Sheets[sInv]);
+          if (sSales) {
+            appState.sales = XLSX.utils.sheet_to_json(workbook.Sheets[sSales]);
+            prepareRawSalesData();
+          }
+          if (sDate) appState.calendar = XLSX.utils.sheet_to_json(workbook.Sheets[sDate]);
+
+          appState.userConfig = { '品类': {}, '季节': {}, '单里/绒里': {} };
+
+          appState.filterCategories = getAllCategoryLeafKeys();
+
+          updateDropdownSlicers();
+          buildMonthlyGrowthBar();
+          updateModel();
+
+          showToast(`已成功载入 ${appState.baseInfo.length} 条基础SKU数据`);
+        } catch (err) {
+          console.error(err);
+          alert('解析 Excel 失败，请检查文件格式。');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      e.target.value = '';
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMessage').textContent = msg;
+
+      clearTimeout(toastTimer);
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      checkAuthOnLoad();
+      initDefaultData();
+      updateDropdownSlicers();
+      buildMonthlyGrowthBar();
+      setupEvents();
+      updateModel();
+    });
+  </script>
+</body>
+</html>
