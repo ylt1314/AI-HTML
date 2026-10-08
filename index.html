@@ -85,7 +85,7 @@
           </div>
         </div>
 
-        <!-- 访问密码 (保持输入框不变) -->
+        <!-- 访问密码 -->
         <div class="space-y-1">
           <label class="text-xs font-semibold text-slate-700" for="passwordInput">访问密码 (Password)</label>
           <div class="relative">
@@ -136,11 +136,19 @@
           </div>
         </div>
 
-        <!-- 动作按钮区与退出登录 -->
+        <!-- 动作按钮区：包含Excel模板、HTML离线下载、上传与导出 -->
         <div class="flex items-center space-x-2 select-none">
+          <!-- 新增：直接下载当前页面完整HTML离线文件 -->
+          <button id="btnDownloadHtml" title="下载离线可运行的完整HTML系统文件" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition-colors border border-emerald-300 shadow-xs">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            下载网页HTML
+          </button>
+
           <button id="btnDownloadTemplate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-200">
             <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             下载Excel模板
           </button>
@@ -155,7 +163,7 @@
 
           <button id="btnExportResult" class="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition-colors">
             <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             导出预测分析表
           </button>
@@ -192,13 +200,12 @@
           <div class="text-xs space-y-1">
             <div class="font-semibold text-sky-200">鞋服季节性预测算法 & 发货/库存平衡模型逻辑：</div>
             <div class="text-slate-300 flex flex-wrap gap-x-4 gap-y-1">
-              <span>• <strong class="text-sky-300 font-mono">当月预计发货量</strong> = 去年同期真实销量 × (1 + 自填预计增长率)</span>
+              <span>• <strong class="text-sky-300 font-mono">当月预计发货量</strong> = 去年同期销量 × (1 + 自填增长率) <span class="text-amber-300 font-bold">【注：当前所在月(10月)已自动扣减当月实际已发(10.1~10.7)】</span></span>
               <span>• <strong class="text-emerald-300 font-mono">较同期净增减</strong> = 当月预计发货量 − 去年同期实际销量</span>
               <span>• <strong class="text-indigo-300 font-mono">预估实际发货量</strong> = 预计发货量总计 × (1 - 退货率)</span>
               <span>• <strong class="text-teal-300 font-mono">在仓售罄率</strong> = 期间销量 ÷ (在仓库存 + 期间销量)</span>
               <span>• <strong class="text-teal-200 font-mono">总售罄率</strong> = 期间销量 ÷ (总库存 + 期间销量) [春夏取3-8月，秋冬取9-次年2月]</span>
               <span>• <strong class="text-amber-300 font-mono">库存溢出差额</strong> = 季末目标库存 - (总库存 - 预估实际发货量)</span>
-              <span>• <strong class="text-rose-300 font-mono">未走完月份联动</strong>：天数精准对齐同期 + 余期发货量 = 剩余天数 × 近3天平均日发</span>
             </div>
           </div>
         </div>
@@ -265,7 +272,7 @@
           </select>
         </div>
 
-        <!-- 升级：包含二级类目外层与四级类目内层的层级多选切片器 -->
+        <!-- 包含二级类目外层与四级类目内层的层级多选切片器 -->
         <div class="space-y-1 relative" id="categorySlicerWrapper">
           <label class="text-xs font-semibold text-slate-600 flex justify-between items-center select-none">
             <span>四级类目切片 (含二级分组多选)</span>
@@ -296,13 +303,14 @@
           </select>
         </div>
 
+        <!-- 需求1：滚动预期期数选项保持2、3、4、6个月，强制包含当前月(10月) -->
         <div class="space-y-1">
-          <label for="horizonSelect" class="text-xs font-semibold text-slate-600 select-none">滚动预测期数</label>
+          <label for="horizonSelect" class="text-xs font-semibold text-slate-600 select-none">滚动预测期数 (含当月10月)</label>
           <select id="horizonSelect" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white transition">
-            <option value="2">未来 2 个月</option>
-            <option value="3" selected>未来 3 个月 (一季度)</option>
-            <option value="4">未来 4 个月</option>
-            <option value="6">未来 6 个月 (半年)</option>
+            <option value="2">2 个月 (10月 ~ 11月)</option>
+            <option value="3" selected>3 个月 (10月 ~ 12月)</option>
+            <option value="4">4 个月 (10月 ~ 次年1月)</option>
+            <option value="6">6 个月 (10月 ~ 次年3月)</option>
           </select>
         </div>
 
@@ -320,6 +328,7 @@
         </div>
       </div>
 
+      <!-- 需求1：各月全局预计增长率设置（推导各月预计发货量），一定要包含10月 -->
       <div class="pt-3 border-t border-dashed border-slate-200 flex flex-wrap items-center gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200 select-none" id="monthlyGrowthControlBar"></div>
     </section>
 
@@ -328,7 +337,7 @@
       <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
         <div class="text-[11px] font-semibold text-slate-500">预计发货量总计</div>
         <div id="kpiForecastSales" class="text-lg sm:text-xl font-bold text-slate-900 mt-1">0</div>
-        <div class="text-[10px] text-sky-600 mt-0.5">含余期补发 + 各月增长量</div>
+        <div class="text-[10px] text-sky-600 mt-0.5">当月已扣减实发 + 各月增长量</div>
       </div>
 
       <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
@@ -373,7 +382,7 @@
 
     <!-- 可视化与统计分析支撑区域 -->
     <section class="space-y-5">
-      <!-- 按月统计分析表 (支持任意框选复制) -->
+      <!-- 按月统计分析表 -->
       <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
           <div>
@@ -381,7 +390,7 @@
               <span class="w-2.5 h-2.5 rounded bg-sky-600 inline-block mr-2"></span>
               按月统计分析表 (月度发货分解与同期对比)
             </h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">较同期净增减 = 当月预计发货量 − 去年同期实际销量；单击月份可秒级调取全盘月度同比及品类发货预测明细（支持划词框选复制）</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">较同期净增减 = 当月预计发货量 − 去年同期实际销量；10月为当前所在月，预计发货量已扣减当月实际已发（10.1~10.7）；单击月份可秒级调取历史明细</p>
           </div>
           <div class="flex items-center space-x-2 text-xs select-text">
             <span class="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-medium shadow-xs">
@@ -389,9 +398,11 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
               数据更新时间：
-              <span id="dataUpdateLatestDate" class="font-mono font-bold text-sky-700 ml-1">2026-09-26</span>
+              <span id="dataUpdateLatestDate" class="font-mono font-bold text-sky-700 ml-1">2026-10-07</span>
             </span>
-            <span id="unfinishedMonthBadge" class="hidden px-2 py-1 text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-lg"></span>
+            <span id="currentMonthBadge" class="px-2 py-1 text-[11px] font-bold bg-sky-100 text-sky-900 border border-sky-300 rounded-lg">
+              当前所在月：10月 (更新至10.7日，已扣减当月已发)
+            </span>
           </div>
         </div>
 
@@ -399,15 +410,17 @@
           <table class="w-full text-left text-xs border-collapse" id="monthlyAnalysisTable">
             <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 select-none">
               <tr>
-                <th class="py-2.5 px-3 font-bold min-w-[125px]">
+                <th class="py-2.5 px-3 font-bold min-w-[140px]">
                   预测自然月份 <span class="text-[10px] font-normal text-sky-700">(单击弹窗)</span>
                 </th>
                 <th class="py-2.5 px-3 font-semibold text-slate-500">去年同期月份</th>
-                <th class="py-2.5 px-3 text-right font-semibold text-slate-600 min-w-[140px]">去年同期实际销量 (件)</th>
+                <th class="py-2.5 px-3 text-right font-semibold text-slate-600 min-w-[130px]">去年同期实际销量 (件)</th>
                 <th class="py-2.5 px-3 text-center font-bold text-sky-800 bg-sky-100/60 min-w-[145px]">
                   预计增长率%<br><span class="text-[10px] text-sky-600 font-normal">✎敏捷调节·实时同步</span>
                 </th>
-                <th class="py-2.5 px-3 text-right font-bold text-sky-900 bg-sky-100/50">当月预计发货量 (件)</th>
+                <th class="py-2.5 px-3 text-right font-bold text-sky-900 bg-sky-100/50 min-w-[140px]">
+                  当月预计发货量 (件)<br><span class="text-[10px] text-sky-700 font-normal">当月扣减已发</span>
+                </th>
                 <th class="py-2.5 px-3 text-center font-semibold text-slate-500">预估退货率</th>
                 <th class="py-2.5 px-3 text-right font-semibold text-slate-500">预估退货件数 (件)</th>
                 <th class="py-2.5 px-3 text-right font-black text-indigo-700 bg-indigo-50/60">预估实际发货量 (件)</th>
@@ -447,7 +460,7 @@
               <span class="w-2.5 h-2.5 rounded bg-indigo-500 inline-block mr-2"></span>
               当前维度库存平衡与溢出分析
             </h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">多柱对比总库存、预估实际发货量、自填季末目标库存与差额（水平轴仅展示四级类目，单位: 件）</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">多柱对比总库存、预估实际发货量、自填季末目标库存与差额（水平轴展示，单位: 件）</p>
           </div>
           <div class="flex items-center space-x-3 text-[11px] text-slate-500 select-none">
             <span class="flex items-center"><span class="w-2 h-2 rounded bg-rose-500 inline-block mr-1"></span> 红色：溢出差额 &lt; 0</span>
@@ -460,7 +473,7 @@
       </div>
     </section>
 
-    <!-- 滚动预测明细大表 (支持任意框选复制) -->
+    <!-- 滚动预测明细大表 -->
     <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden select-text">
       <div class="p-4 border-b border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center space-x-3">
@@ -474,7 +487,7 @@
         </div>
 
         <div class="text-xs text-slate-500 flex items-center space-x-2">
-          <span>💡 提示：<strong class="text-sky-700 underline cursor-pointer">单击四级类目/字段名称</strong> 可弹窗查看历史同比增速；在仓售罄率与总售罄率已按所选/所属季节自动统计。</span>
+          <span>💡 提示：<strong class="text-sky-700 underline cursor-pointer">单击四级类目/字段名称</strong> 可弹窗查看历史同比增速；当前月(10月)已自动剔除当月已发量。</span>
         </div>
       </div>
 
@@ -493,7 +506,7 @@
           <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block mr-1"></span> 绿色：供需与目标平衡</span>
         </div>
         <div class="text-slate-500 font-mono">
-          计算公式：在仓售罄 = 期间销量 ÷ (在仓库存 + 期间销量) | 总售罄 = 期间销量 ÷ (总库存 + 期间销量) [春夏取3-8月，秋冬取9-次年2月] | 溢出差额 = 季末目标库存 - (总库存 - 预估实际发货量)
+          计算公式：预计发货量 = 去年同期 × (1+预计增长率) (10月扣减已发) | 实际发货 = 预计发货 × (1-退货率) | 溢出差额 = 目标库存 - (总库存 - 预估实际发货)
         </div>
       </div>
     </section>
@@ -511,7 +524,7 @@
           </div>
           <div>
             <h3 class="text-sm sm:text-base font-bold text-slate-900" id="modalFieldTitle">销售历史与同比增速分析</h3>
-            <p class="text-xs text-slate-500 mt-0.5" id="modalFieldSubtitle">展示 2025 全年、2026 年累计销量及天数精准对齐之同比增速 YoY%</p>
+            <p class="text-xs text-slate-500 mt-0.5" id="modalFieldSubtitle">展示 2025 全年、2026 年累计销量及同期对齐同比增速 YoY%</p>
           </div>
         </div>
         <button id="btnCloseModal" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors select-none">
@@ -533,7 +546,7 @@
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
             <div class="text-[11px] text-slate-500 font-medium">2026 年累计销量</div>
             <div class="text-base sm:text-lg font-bold text-indigo-700 mt-0.5" id="modalMetric2026Cum">0 件</div>
-            <div class="text-[10px] text-indigo-500 mt-0.5" id="modalMetric2026CumSub">截至最新导入日</div>
+            <div class="text-[10px] text-indigo-500 mt-0.5" id="modalMetric2026CumSub">截至10月07日</div>
           </div>
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
             <div class="text-[11px] text-slate-500 font-medium">2025 同期累计销量</div>
@@ -583,7 +596,7 @@
         <div id="modalMonthCategoryBreakdownSection" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm hidden">
           <div class="p-2.5 bg-sky-50 border-b border-sky-200 font-bold text-xs text-sky-900 flex justify-between items-center">
             <span id="modalMonthBreakdownTitle">【所选月份】各品类销售历史与发货预测明细</span>
-            <span class="text-[11px] font-normal text-sky-700">较同期净增减 = 当月预计发货量 − 去年同期实际销量</span>
+            <span class="text-[11px] font-normal text-sky-700">10月预计发货量已扣减当月已发实发数</span>
           </div>
           <div class="overflow-x-auto max-h-72">
             <table class="w-full text-left text-xs border-collapse">
@@ -591,9 +604,9 @@
                 <tr>
                   <th class="py-2.5 px-3 font-semibold min-w-[85px]">二级类目</th>
                   <th class="py-2.5 px-3 font-semibold min-w-[95px]">四级类目</th>
-                  <th class="py-2.5 px-3 text-right font-semibold text-slate-600 min-w-[125px]">去年同期实销 (件)</th>
+                  <th class="py-2.5 px-3 text-right font-semibold text-slate-600 min-w-[115px]">去年同期实销 (件)</th>
                   <th class="py-2.5 px-3 text-center font-semibold text-sky-800 min-w-[95px]">预计增长率</th>
-                  <th class="py-2.5 px-3 text-right font-bold text-sky-900 min-w-[120px]">当月预计发货量 (件)</th>
+                  <th class="py-2.5 px-3 text-right font-bold text-sky-900 min-w-[130px]">当月预计发货量 (件)</th>
                   <th class="py-2.5 px-3 text-right font-bold text-indigo-700 min-w-[120px]">预估实际发货量 (件)</th>
                   <th class="py-2.5 px-3 text-right font-bold text-slate-800 min-w-[110px]">较同期净增减 (件)</th>
                 </tr>
@@ -638,12 +651,18 @@
       sales: [],
       calendar: [],
 
+      // 当前所在月及预测月序列（以2026-10为起始）
+      currentMonthYM: '2026-10',
       forecastMonths: ['2026-10', '2026-11', '2026-12'],
 
+      // 各月全局预计增长率默认值（包含当前月10月）
       defaultMonthlyGrowth: {
-        '2026-10': 0.10,
-        '2026-11': 0.25,
-        '2026-12': 0.05
+        '2026-10': 0.12,
+        '2026-11': 0.20,
+        '2026-12': 0.08,
+        '2027-01': 0.05,
+        '2027-02': 0.05,
+        '2027-03': 0.06
       },
 
       userConfig: {
@@ -661,8 +680,9 @@
         totalMonthlyDayAgg: {},
         dateTotals: {},
         itemDateTotals: {},
-        latestSalesDate: '2026-09-26',
-        unfinishedInfo: null
+        latestSalesDate: '2026-10-07',
+        currentMonthSalesAgg: {},
+        totalCurrentMonthSales: 0
       }
     };
 
@@ -784,10 +804,14 @@
       const dateTotals = {};
       const itemDateTotals = {};
 
+      const currentMonthSalesAgg = {};
+      let totalCurrentMonthSales = 0;
+
       dimItems.forEach(item => {
         salesMonthlyAgg[item.key] = {};
         salesMonthlyDayAgg[item.key] = {};
         itemDateTotals[item.key] = {};
+        currentMonthSalesAgg[item.key] = 0;
       });
 
       let maxDate = '';
@@ -801,50 +825,29 @@
 
         const sku = row._sku;
         const itemKey = skuToItemKey[sku];
-        if (!itemKey) continue;
-
         const ym = row._ym;
         const day = row._day;
         const q = row._q;
 
-        salesMonthlyAgg[itemKey][ym] = (salesMonthlyAgg[itemKey][ym] || 0) + q;
-        if (!salesMonthlyDayAgg[itemKey][ym]) salesMonthlyDayAgg[itemKey][ym] = {};
-        salesMonthlyDayAgg[itemKey][ym][day] = (salesMonthlyDayAgg[itemKey][ym][day] || 0) + q;
-        itemDateTotals[itemKey][d] = (itemDateTotals[itemKey][d] || 0) + q;
+        if (itemKey) {
+          salesMonthlyAgg[itemKey][ym] = (salesMonthlyAgg[itemKey][ym] || 0) + q;
+          if (!salesMonthlyDayAgg[itemKey][ym]) salesMonthlyDayAgg[itemKey][ym] = {};
+          salesMonthlyDayAgg[itemKey][ym][day] = (salesMonthlyDayAgg[itemKey][ym][day] || 0) + q;
+          itemDateTotals[itemKey][d] = (itemDateTotals[itemKey][d] || 0) + q;
+
+          // 统计当前所在月份(2026-10)的累计已发货量
+          if (ym === appState.currentMonthYM) {
+            currentMonthSalesAgg[itemKey] = (currentMonthSalesAgg[itemKey] || 0) + q;
+          }
+        }
 
         totalMonthlyAgg[ym] = (totalMonthlyAgg[ym] || 0) + q;
         if (!totalMonthlyDayAgg[ym]) totalMonthlyDayAgg[ym] = {};
         totalMonthlyDayAgg[ym][day] = (totalMonthlyDayAgg[ym][day] || 0) + q;
         dateTotals[d] = (dateTotals[d] || 0) + q;
-      }
 
-      let unfinishedInfo = null;
-      if (maxDate && maxDate !== '暂无数据') {
-        const [yStr, mStr, dStr] = maxDate.split('-');
-        const year = parseInt(yStr, 10);
-        const month = parseInt(mStr, 10);
-        const latestDay = parseInt(dStr, 10);
-        const ym = `${yStr}-${mStr}`;
-        const totalDays = new Date(year, month, 0).getDate();
-        const remainingDays = totalDays - latestDay;
-
-        if (remainingDays > 0) {
-          const allCurMonthDates = Object.keys(dateTotals)
-            .filter(d => d.startsWith(ym) && d <= maxDate)
-            .sort();
-          const last3Dates = allCurMonthDates.slice(-3);
-
-          unfinishedInfo = {
-            latestDateStr: maxDate,
-            year,
-            month,
-            latestDay,
-            totalDays,
-            remainingDays,
-            ym,
-            samePeriodYM: getSamePeriodLastYear(ym),
-            last3Dates: last3Dates.length > 0 ? last3Dates : [maxDate]
-          };
+        if (ym === appState.currentMonthYM) {
+          totalCurrentMonthSales += q;
         }
       }
 
@@ -855,8 +858,9 @@
         totalMonthlyDayAgg,
         dateTotals,
         itemDateTotals,
-        latestSalesDate: maxDate || '暂无数据',
-        unfinishedInfo
+        latestSalesDate: maxDate || '2026-10-07',
+        currentMonthSalesAgg,
+        totalCurrentMonthSales
       };
     }
 
@@ -883,23 +887,14 @@
       }
     }
 
-    function getAggDailyAvg(dimKey, last3Dates) {
-      if (!last3Dates || last3Dates.length === 0) return 0;
+    function getCurrentMonthActualSold(dimKey) {
       const idx = appState.fastAggIndex;
-      let tot = 0;
-      if (dimKey === 'ALL') {
-        last3Dates.forEach(d => { tot += (idx.dateTotals[d] || 0); });
-      } else {
-        const map = idx.itemDateTotals[dimKey];
-        if (map) {
-          last3Dates.forEach(d => { tot += (map[d] || 0); });
-        }
-      }
-      return tot / last3Dates.length;
+      if (dimKey === 'ALL') return idx.totalCurrentMonthSales || 0;
+      return (idx.currentMonthSalesAgg && idx.currentMonthSalesAgg[dimKey]) || 0;
     }
 
     /**
-     * ================= 4. 初始化示范数据集 =================
+     * ================= 4. 初始化示范数据集 (数据更新至 2026-10-07) =================
      */
     function initDefaultData() {
       appState.baseInfo = [
@@ -959,40 +954,42 @@
       const pastMonths = [
         "2024-09", "2024-10", "2024-11", "2024-12",
         "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06",
-        "2025-07", "2025-08", "2025-10", "2025-11", "2025-12",
+        "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12",
         "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
-        "2026-07", "2026-08"
+        "2026-07", "2026-08", "2026-09"
       ];
 
       Object.keys(skuMonthlyProfile).forEach(sku => {
         const [baseQty, seasonalFactors] = skuMonthlyProfile[sku];
+        
+        // 历史完整月份数据
         pastMonths.forEach(ym => {
           const parts = ym.split('-');
           const year = parseInt(parts[0], 10);
           const month = parseInt(parts[1], 10);
           const factor = seasonalFactors[month - 1];
-          const yearGrowth = year === 2025 ? 1.08 : (year === 2026 ? 1.21 : 1.0);
+          const yearGrowth = year === 2025 ? 1.08 : (year === 2026 ? 1.20 : 1.0);
           const mQty = Math.round(baseQty * factor * yearGrowth);
           appState.sales.push({ "货号": sku, "日期": `${ym}-15`, "销量": mQty, "销售额": mQty * 299 });
         });
 
-        const factor09 = seasonalFactors[8];
-        const base25_09 = Math.round(baseQty * factor09 * 1.08);
-        const base26_09 = Math.round(baseQty * factor09 * 1.21);
+        // 2025-10 的同期天数对齐划分(10.1~10.7)
+        const factor10 = seasonalFactors[9];
+        const base25_10 = Math.round(baseQty * factor10 * 1.08);
+        const qty25_01to07 = Math.round(base25_10 * 0.26);
+        const qty25_08to31 = base25_10 - qty25_01to07;
+        appState.sales.push({ "货号": sku, "日期": "2025-10-05", "销量": qty25_01to07, "销售额": qty25_01to07 * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2025-10-20", "销量": qty25_08to31, "销售额": qty25_08to31 * 299 });
 
-        const qty25_01to26 = Math.round(base25_09 * 0.82);
-        const qty25_27to30 = base25_09 - qty25_01to26;
+        // 2026-10 当前所在月，实际更新到 2026-10-07
+        const base26_10 = Math.round(baseQty * factor10 * 1.20);
+        const qty26_01to07 = Math.round(base26_10 * 0.28);
+        const daily26_10 = Math.round(qty26_01to07 / 4);
 
-        appState.sales.push({ "货号": sku, "日期": "2025-09-15", "销量": qty25_01to26, "销售额": qty25_01to26 * 299 });
-        appState.sales.push({ "货号": sku, "日期": "2025-09-28", "销量": qty25_27to30, "销售额": qty25_27to30 * 299 });
-
-        const qty26_01to23 = Math.round(base26_09 * 0.72);
-        const daily26_recent = Math.round((base26_09 * 0.12) / 3);
-
-        appState.sales.push({ "货号": sku, "日期": "2026-09-15", "销量": qty26_01to23, "销售额": qty26_01to23 * 299 });
-        appState.sales.push({ "货号": sku, "日期": "2026-09-24", "销量": daily26_recent, "销售额": daily26_recent * 299 });
-        appState.sales.push({ "货号": sku, "日期": "2026-09-25", "销量": daily26_recent + 2, "销售额": (daily26_recent + 2) * 299 });
-        appState.sales.push({ "货号": sku, "日期": "2026-09-26", "销量": daily26_recent + 1, "销售额": (daily26_recent + 1) * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2026-10-02", "销量": daily26_10, "销售额": daily26_10 * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2026-10-04", "销量": daily26_10 + 2, "销售额": (daily26_10 + 2) * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2026-10-06", "销量": daily26_10 + 1, "销售额": (daily26_10 + 1) * 299 });
+        appState.sales.push({ "货号": sku, "日期": "2026-10-07", "销量": Math.max(1, qty26_01to07 - daily26_10 * 3 - 3), "销售额": 1500 });
       });
 
       prepareRawSalesData();
@@ -1024,8 +1021,6 @@
     /**
      * ================= 5. 下拉切片器与层级品类组件 =================
      */
-
-    // 提取 二级类目 -> [四级类目] 树形层级结构
     function getCategoryHierarchy() {
       const map = new Map();
       appState.baseInfo.forEach(b => {
@@ -1047,7 +1042,6 @@
       return res;
     }
 
-    // 获取所有复合叶子键 (二级类目___四级类目)
     function getAllCategoryLeafKeys() {
       const hierarchy = getCategoryHierarchy();
       const keys = [];
@@ -1059,7 +1053,6 @@
       return keys;
     }
 
-    // 判断具体四级类目是否在当前勾选范围内
     function isCategorySelected(subCat, cat) {
       if (!appState.filterCategories) return true;
       const key = `${subCat}___${cat}`;
@@ -1088,7 +1081,6 @@
       renderCategoryMultiSelect();
     }
 
-    // 核心渲染：外层二级类目 + 内层四级类目 树形多选切片器
     function renderCategoryMultiSelect() {
       const container = document.getElementById('categoryCheckboxesList');
       if (!container) return;
@@ -1107,7 +1099,6 @@
         const totalChildren = cats.length;
         const selectedChildren = cats.filter(c => isCategorySelected(subCat, c)).length;
 
-        // 外层：二级类目表头（带全选复选框、折叠指示箭头与选中计数）
         const headerDiv = document.createElement('div');
         headerDiv.className = "group-header flex items-center justify-between px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200/80 transition cursor-pointer select-none";
         headerDiv.innerHTML = `
@@ -1137,7 +1128,6 @@
           subcatCheckbox.indeterminate = false;
         }
 
-        // 内层：四级类目复选框列表
         const childrenDiv = document.createElement('div');
         childrenDiv.className = "group-children px-2.5 py-1.5 space-y-1 bg-white border-t border-slate-100 pl-6";
 
@@ -1157,7 +1147,6 @@
         groupDiv.appendChild(childrenDiv);
         container.appendChild(groupDiv);
 
-        // 点击表头折叠/展开子级
         headerDiv.addEventListener('click', (e) => {
           if (e.target.closest('.subcat-checkbox')) return;
           const isCollapsed = childrenDiv.classList.toggle('hidden');
@@ -1165,42 +1154,32 @@
           if (chevron) chevron.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
         });
 
-        // 二级类目复选框点击联动整组四级类目
-        subcatCheckbox.addEventListener('click', (e) => {
-          e.stopPropagation();
-        });
+        subcatCheckbox.addEventListener('click', (e) => { e.stopPropagation(); });
         subcatCheckbox.addEventListener('change', (e) => {
           e.stopPropagation();
           const checkAll = subcatCheckbox.checked;
           cats.forEach(cat => {
             const key = `${subCat}___${cat}`;
             if (checkAll) {
-              if (!appState.filterCategories.includes(key)) {
-                appState.filterCategories.push(key);
-              }
+              if (!appState.filterCategories.includes(key)) appState.filterCategories.push(key);
             } else {
               appState.filterCategories = appState.filterCategories.filter(k => k !== key && k !== cat);
             }
           });
-          childrenDiv.querySelectorAll('.cat-checkbox').forEach(cb => {
-            cb.checked = checkAll;
-          });
+          childrenDiv.querySelectorAll('.cat-checkbox').forEach(cb => { cb.checked = checkAll; });
           subcatCheckbox.indeterminate = false;
           updateGroupHeaderBadge(groupDiv, subCat, cats);
           updateCategoryMultiBtnText(allKeys.length);
           updateModel();
         });
 
-        // 单个四级类目变动事件
         childrenDiv.querySelectorAll('.cat-checkbox').forEach(cb => {
           cb.addEventListener('change', (e) => {
             e.stopPropagation();
             const key = cb.value;
             const cat = cb.getAttribute('data-cat');
             if (cb.checked) {
-              if (!appState.filterCategories.includes(key)) {
-                appState.filterCategories.push(key);
-              }
+              if (!appState.filterCategories.includes(key)) appState.filterCategories.push(key);
             } else {
               appState.filterCategories = appState.filterCategories.filter(k => k !== key && k !== cat);
             }
@@ -1214,7 +1193,6 @@
       updateCategoryMultiBtnText(allKeys.length);
     }
 
-    // 局部更新二级类目父级复选框与计数徽章
     function updateGroupHeaderBadge(groupDiv, subCat, cats) {
       const total = cats.length;
       const selected = cats.filter(c => isCategorySelected(subCat, c)).length;
@@ -1240,7 +1218,6 @@
       }
     }
 
-    // 更新切片器按钮文本及概要信息
     function updateCategoryMultiBtnText(totalCount) {
       const btnText = document.getElementById('categoryMultiBtnText');
       if (!btnText) return;
@@ -1284,21 +1261,25 @@
       }
     }
 
+    // 各月全局预计增长率设置（推导各月预计发货量），一定要包含10月
     function buildMonthlyGrowthBar() {
       const bar = document.getElementById("monthlyGrowthControlBar");
       bar.innerHTML = `
         <div class="flex items-center space-x-1.5 text-xs font-bold text-sky-800">
           <span class="w-2 h-2 rounded-full bg-sky-500"></span>
-          <span>各月全局预计增长率设置 (推导各月预计发货量)：</span>
+          <span>各月全局预计增长率设置 (推导各月预计发货量，含当月10月)：</span>
         </div>
       `;
 
       appState.forecastMonths.forEach(m => {
-        const rateVal = Math.round((appState.defaultMonthlyGrowth[m] || 0.10) * 100);
+        const rateVal = Math.round((appState.defaultMonthlyGrowth[m] !== undefined ? appState.defaultMonthlyGrowth[m] : 0.10) * 100);
+        const isCurrentMonth = (m === appState.currentMonthYM);
         const div = document.createElement("div");
-        div.className = "inline-flex items-center space-x-1 bg-white px-2 py-1 rounded-lg border border-slate-300 shadow-sm";
+        div.className = `inline-flex items-center space-x-1 px-2 py-1 rounded-lg border shadow-sm ${isCurrentMonth ? 'bg-sky-50 border-sky-300 ring-1 ring-sky-300' : 'bg-white border-slate-300'}`;
         div.innerHTML = `
-          <span class="text-xs font-semibold text-slate-700 mr-0.5">${m.slice(5)}月:</span>
+          <span class="text-xs font-bold ${isCurrentMonth ? 'text-sky-900' : 'text-slate-700'} mr-0.5">
+            ${m.slice(5)}月${isCurrentMonth ? '(当月)' : ''}:
+          </span>
           <button type="button" 
                   class="w-5 h-5 flex items-center justify-center rounded bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-600 hover:text-sky-700 font-black text-xs transition select-none" 
                   onclick="stepMonthlyRate('${m}', -1)" 
@@ -1325,7 +1306,7 @@
     }
 
     function stepMonthlyRate(month, delta) {
-      let cur = Math.round((appState.defaultMonthlyGrowth[month] || 0.10) * 100);
+      let cur = Math.round((appState.defaultMonthlyGrowth[month] !== undefined ? appState.defaultMonthlyGrowth[month] : 0.10) * 100);
       let next = cur + delta;
       onGlobalMonthGrowthChange(month, next);
     }
@@ -1358,6 +1339,7 @@
       updateModel();
     }
 
+    // 滚动预期期数切换，必须把当前所在月（10月）计算进去
     function onForecastSpanChange(spanCount) {
       const count = parseInt(spanCount, 10);
       const allPossibleMonths = ['2026-10', '2026-11', '2026-12', '2027-01', '2027-02', '2027-03'];
@@ -1371,7 +1353,7 @@
 
       buildMonthlyGrowthBar();
       updateModel();
-      showToast(`已切换为未来 ${count} 个月滚动预测`);
+      showToast(`已切换为滚动 ${count} 个月预测（起始包含当月10月）`);
     }
 
     function updateDimensionTabStyles() {
@@ -1393,6 +1375,7 @@
 
     /**
      * ================= 6. 核心多表关联计算与渲染引擎 =================
+     * 去除含余期补发；当前所在月(10月)预计发货量扣减当月实际已发
      */
     function updateModel() {
       const dim = appState.currentDimension;
@@ -1451,18 +1434,9 @@
 
       buildFastAggIndex(dimItems, skuToItemKey);
       const fastIdx = appState.fastAggIndex;
-      const unfinishedInfo = fastIdx.unfinishedInfo;
 
       const dateEl = document.getElementById('dataUpdateLatestDate');
       if (dateEl) dateEl.textContent = fastIdx.latestSalesDate;
-
-      const unfinishedBadge = document.getElementById('unfinishedMonthBadge');
-      if (unfinishedInfo) {
-        unfinishedBadge.classList.remove('hidden');
-        unfinishedBadge.textContent = `⚡ ${unfinishedInfo.ym}仅录入至${unfinishedInfo.latestDay}日，剩余${unfinishedInfo.remainingDays}天已按近3天日均发货联动补齐`;
-      } else {
-        unfinishedBadge.classList.add('hidden');
-      }
 
       const stockAgg = {};
       dimItems.forEach(item => { stockAgg[item.key] = { warehouse: 0, inTransit: 0, total: 0 }; });
@@ -1480,7 +1454,6 @@
         }
       });
 
-      // 提取货号所属季节属性
       const skuSeasonMap = {};
       appState.baseInfo.forEach(b => {
         const sku = String(b["货号"] || '').trim();
@@ -1493,19 +1466,13 @@
         return /春|夏|SS|S/i.test(s) && !/秋冬|秋|冬|AW|FW/i.test(s);
       };
 
-      const latestDateStr = fastIdx.latestSalesDate || '2026-09-26';
-      let curYear = 2026;
-      if (latestDateStr && latestDateStr.length >= 4) {
-        curYear = parseInt(latestDateStr.slice(0, 4), 10) || 2026;
-      }
-
+      const curYear = 2026;
       const ssStart = `${curYear}-03-01`;
       const ssEnd = `${curYear}-08-31`;
       const awStart = `${curYear}-09-01`;
       const nextYear = curYear + 1;
       const awEnd = `${nextYear}-02-29`;
 
-      // 期间销量聚合
       const periodSalesAgg = {};
       dimItems.forEach(item => { periodSalesAgg[item.key] = 0; });
 
@@ -1531,9 +1498,7 @@
         }
 
         if (isSS) {
-          if (d >= ssStart && d <= ssEnd) {
-            periodSalesAgg[itemKey] += q;
-          }
+          if (d >= ssStart && d <= ssEnd) periodSalesAgg[itemKey] += q;
         } else {
           if ((d >= awStart && d <= `${curYear}-12-31`) || (d >= `${nextYear}-01-01` && d <= awEnd)) {
             periodSalesAgg[itemKey] += q;
@@ -1541,41 +1506,26 @@
         }
       }
 
+      // 近期同期增幅参考
       const actualGrowthRefMap = {};
       dimItems.forEach(item => {
         const k = item.key;
-        if (unfinishedInfo) {
-          const s2026_aligned = getAggSales(k, unfinishedInfo.ym, unfinishedInfo.latestDay);
-          const s2025_aligned = getAggSales(k, unfinishedInfo.samePeriodYM, unfinishedInfo.latestDay);
-          actualGrowthRefMap[k] = s2025_aligned > 0 ? (s2026_aligned - s2025_aligned) / s2025_aligned : 0.10;
-        } else {
-          const s2026 = getAggSales(k, '2026-09', null);
-          const s2025 = getAggSales(k, '2025-09', null);
-          actualGrowthRefMap[k] = s2025 > 0 ? (s2026 - s2025) / s2025 : 0.12;
-        }
+        const s2026_09 = getAggSales(k, '2026-09', null);
+        const s2025_09 = getAggSales(k, '2025-09', null);
+        actualGrowthRefMap[k] = s2025_09 > 0 ? (s2026_09 - s2025_09) / s2025_09 : 0.12;
       });
 
-      renderDynamicTableHeader(dim, isCategoryDim, unfinishedInfo);
+      renderDynamicTableHeader(dim, isCategoryDim);
 
       const monthlyStats = {};
       appState.forecastMonths.forEach(m => {
         monthlyStats[m] = {
           samePeriodMonth: getSamePeriodLastYear(m),
           samePeriodSales: 0,
-          forecastShipment: 0
+          forecastShipment: 0,
+          actualSoldInMonth: 0
         };
       });
-
-      let unfinishedPeriodStats = null;
-      if (unfinishedInfo) {
-        unfinishedPeriodStats = {
-          label: `${unfinishedInfo.ym} (余${unfinishedInfo.remainingDays}天)`,
-          samePeriodMonth: `${unfinishedInfo.samePeriodYM} (同余期)`,
-          priorRestSales: 0,
-          priorFullSales: 0,
-          forecastShipment: 0
-        };
-      }
 
       let sumForecastSales = 0;
       let sumActualShipments = 0;
@@ -1606,43 +1556,28 @@
         let rowForecastTotal = 0;
         let monthCellsHtml = '';
 
-        if (unfinishedInfo) {
-          const itemDailyAvg = getAggDailyAvg(dimKey, unfinishedInfo.last3Dates);
-          const itemRemainingForecast = Math.round(unfinishedInfo.remainingDays * itemDailyAvg);
-
-          const spFull = getAggSales(dimKey, unfinishedInfo.samePeriodYM, null);
-          const spAligned = getAggSales(dimKey, unfinishedInfo.samePeriodYM, unfinishedInfo.latestDay);
-          const spRest = Math.max(0, spFull - spAligned);
-
-          rowForecastTotal += itemRemainingForecast;
-          if (unfinishedPeriodStats) {
-            unfinishedPeriodStats.priorRestSales += spRest;
-            unfinishedPeriodStats.priorFullSales += spFull;
-            unfinishedPeriodStats.forecastShipment += itemRemainingForecast;
-          }
-
-          monthCellsHtml += `
-            <td class="py-2.5 px-2 text-right font-mono text-slate-500 bg-amber-50/40 border-l border-amber-200">
-              ${spRest.toLocaleString()}
-              <span class="text-[10px] text-slate-400 block font-normal">(全月:${spFull.toLocaleString()})</span>
-            </td>
-            <td class="py-2.5 px-2 text-center font-mono text-amber-800 bg-amber-50/30 text-[11px]">${itemDailyAvg.toFixed(1)}/天</td>
-            <td class="py-2.5 px-2 text-center font-mono font-bold text-amber-900 bg-amber-50/50">${unfinishedInfo.remainingDays} 天</td>
-            <td class="py-2.5 px-2 text-right font-mono font-black text-amber-900 bg-amber-100/60 border-r border-amber-200">${itemRemainingForecast.toLocaleString()}</td>
-          `;
-        }
-
         appState.forecastMonths.forEach(m => {
           const samePeriodMonth = getSamePeriodLastYear(m);
           const samePeriodSales = getAggSales(dimKey, samePeriodMonth, null);
 
           let growthRate = (userCfg.monthlyRates && userCfg.monthlyRates[m] !== undefined)
             ? userCfg.monthlyRates[m]
-            : (appState.defaultMonthlyGrowth[m] || 0.10);
+            : (appState.defaultMonthlyGrowth[m] !== undefined ? appState.defaultMonthlyGrowth[m] : 0.10);
 
-          let monthForecastShipment = samePeriodSales > 0 
+          let baseShipment = samePeriodSales > 0 
             ? Math.round(samePeriodSales * (1 + growthRate))
             : Math.round(stk.total * 0.15 * (1 + growthRate));
+
+          // 核心更新：当前所在月(10月)，自动把当月实际已发扣减
+          let monthForecastShipment = baseShipment;
+          let actualSoldMTD = 0;
+          let isCurrentMonth = (m === appState.currentMonthYM);
+
+          if (isCurrentMonth) {
+            actualSoldMTD = getCurrentMonthActualSold(dimKey);
+            monthForecastShipment = Math.max(0, baseShipment - actualSoldMTD);
+            monthlyStats[m].actualSoldInMonth += actualSoldMTD;
+          }
 
           rowForecastTotal += monthForecastShipment;
           monthlyStats[m].samePeriodSales += samePeriodSales;
@@ -1651,8 +1586,14 @@
           const ratePctVal = Math.round(growthRate * 100);
           const refRateText = (refGrowthRate >= 0 ? '+' : '') + (refGrowthRate * 100).toFixed(1) + '%';
 
+          const currentMonthHint = isCurrentMonth 
+            ? `<div class="text-[9px] text-amber-700 font-normal leading-tight">全月:${baseShipment.toLocaleString()} - 已发:${actualSoldMTD.toLocaleString()}</div>`
+            : '';
+
           monthCellsHtml += `
-            <td class="py-2.5 px-2 text-right font-mono text-slate-500 bg-slate-50/60 border-l border-slate-200">${samePeriodSales.toLocaleString()}</td>
+            <td class="py-2.5 px-2 text-right font-mono text-slate-500 bg-slate-50/60 border-l border-slate-200">
+              ${samePeriodSales.toLocaleString()}
+            </td>
             <td class="py-2.5 px-2 text-center font-mono text-slate-400 text-[11px]">${refRateText}</td>
             <td class="py-1.5 px-2 text-center bg-sky-50/20 select-none">
               <input type="number" 
@@ -1665,7 +1606,10 @@
                      title="点击修改在${m}的预计增长率" />
               <span class="text-[11px] text-slate-500">%</span>
             </td>
-            <td class="py-2.5 px-2 text-right font-mono font-bold text-sky-950 bg-sky-50/40 border-r border-slate-200">${monthForecastShipment.toLocaleString()}</td>
+            <td class="py-2.5 px-2 text-right font-mono font-bold ${isCurrentMonth ? 'text-amber-900 bg-amber-50/70' : 'text-sky-950 bg-sky-50/40'} border-r border-slate-200" title="${isCurrentMonth ? '当月预计发货量已扣减已发' : ''}">
+              ${monthForecastShipment.toLocaleString()}
+              ${currentMonthHint}
+            </td>
           `;
         });
 
@@ -1673,7 +1617,6 @@
         const estimatedEndingStock = stk.total - actualShipment;
         const overflowDiff = targetStock - estimatedEndingStock;
 
-        // 计算售罄率
         const pSales = periodSalesAgg[dimKey] || 0;
         const whSellDenom = stk.warehouse + pSales;
         const whSellThroughText = whSellDenom > 0 ? ((pSales / whSellDenom) * 100).toFixed(1) + '%' : '-';
@@ -1822,7 +1765,7 @@
             subStatusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✔ 小计平衡</span>`;
           }
 
-          const spanMiddleCols = (appState.forecastMonths.length * 4) + (unfinishedInfo ? 4 : 0);
+          const spanMiddleCols = appState.forecastMonths.length * 4;
           rowsHtml += `
             <tr class="bg-sky-50/60 hover:bg-sky-100/60 font-bold border-y-2 border-sky-200 text-slate-800">
               <td colspan="2" class="py-2.5 px-3 sticky left-0 z-10 bg-sky-100/90 border-r border-sky-300 shadow-sm text-sky-950 font-black">
@@ -1832,7 +1775,7 @@
                 </span>
               </td>
               <td colspan="${spanMiddleCols}" class="py-2 px-2 text-center text-slate-400 font-mono text-[11px] border-r border-slate-200">
-                含余期补发与分月独立预计发货分解
+                滚动各月预测发货分解 (10月已扣减当月实际已发)
               </td>
               <td class="py-2 px-2 text-right font-black text-sky-950 bg-sky-200/40 font-mono">${subForecastTotal.toLocaleString()}</td>
               <td class="py-2 px-2 text-right font-bold text-indigo-800 bg-indigo-100/40 font-mono">${subActualShipment.toLocaleString()}</td>
@@ -1903,8 +1846,8 @@
 
       document.getElementById('tableBody').innerHTML = rowsHtml;
 
-      renderTableFooter(dimItems.length, sumForecastSales, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, unfinishedInfo, sumPeriodSales);
-      renderMonthlyAnalysisTable(monthlyStats, sumForecastSales, unfinishedPeriodStats);
+      renderTableFooter(dimItems.length, sumForecastSales, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, sumPeriodSales);
+      renderMonthlyAnalysisTable(monthlyStats, sumForecastSales);
 
       document.getElementById('kpiForecastSales').textContent = sumForecastSales.toLocaleString();
       document.getElementById('kpiActualShipments').textContent = sumActualShipments.toLocaleString();
@@ -1927,7 +1870,7 @@
     /**
      * ================= 7. 按月统计分析表渲染器 =================
      */
-    function renderMonthlyAnalysisTable(monthlyStats, totalForecast, unfinishedPeriodStats) {
+    function renderMonthlyAnalysisTable(monthlyStats, totalForecast) {
       const tbody = document.getElementById('monthlyAnalysisTableBody');
       const tfoot = document.getElementById('monthlyAnalysisTableFoot');
 
@@ -1947,50 +1890,8 @@
       let weightedGrowthSum = 0;
       let totalPriorSalesForWeight = 0;
 
-      if (unfinishedPeriodStats) {
-        const uSpSales = unfinishedPeriodStats.priorRestSales;
-        const uFcShipment = unfinishedPeriodStats.forecastShipment;
-        const uActShipment = Math.round(uFcShipment * (1 - appState.returnRate));
-        const uRetQty = uFcShipment - uActShipment;
-        const uDiffVsPrior = uFcShipment - uSpSales;
-
-        totPriorSales += uSpSales;
-        totForecastShipment += uFcShipment;
-        totActualShipment += uActShipment;
-        totReturnQty += uRetQty;
-
-        tbodyHtml += `
-          <tr class="bg-amber-50/70 hover:bg-amber-100/70 transition-colors font-medium">
-            <td class="py-2.5 px-3 font-mono">
-              <button type="button" 
-                      class="month-modal-btn flex items-center group font-bold text-amber-900 hover:text-amber-950 transition-colors" 
-                      data-month="${unfinishedPeriodStats.label.slice(0, 7)}" 
-                      title="点击弹窗查看当期销量与同期天数对齐明细">
-                <span>${unfinishedPeriodStats.label}</span>
-                <span class="ml-1 px-1 py-0.2 text-[9px] font-bold bg-amber-200 text-amber-900 rounded border border-amber-300 select-none">余期补齐</span>
-              </button>
-            </td>
-            <td class="py-2.5 px-3 font-mono text-slate-500">${unfinishedPeriodStats.samePeriodMonth}</td>
-            <td class="py-2.5 px-3 text-right font-mono font-medium text-slate-700">
-              ${uSpSales.toLocaleString()}
-              <span class="text-[10px] text-slate-400 font-normal ml-1">（全月：${unfinishedPeriodStats.priorFullSales.toLocaleString()}）</span>
-            </td>
-            <td class="py-1.5 px-3 text-center bg-amber-100/40 font-mono text-[11px] text-amber-900 font-bold" title="按本月最近3天日均发货量外推">
-              ⚡ 按近3日均速外推
-            </td>
-            <td class="py-2.5 px-3 text-right font-mono font-black text-amber-950 bg-amber-100/60">${uFcShipment.toLocaleString()}</td>
-            <td class="py-2.5 px-3 text-center font-mono text-slate-500">${(appState.returnRate * 100).toFixed(1)}%</td>
-            <td class="py-2.5 px-3 text-right font-mono text-slate-500">${uRetQty.toLocaleString()}</td>
-            <td class="py-2.5 px-3 text-right font-mono font-black text-indigo-700 bg-indigo-50/50">${uActShipment.toLocaleString()}</td>
-            <td class="py-2.5 px-3 text-right font-mono font-bold ${uDiffVsPrior >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
-              ${uDiffVsPrior >= 0 ? '+' : ''}${uDiffVsPrior.toLocaleString()}
-            </td>
-          </tr>
-        `;
-      }
-
       appState.forecastMonths.forEach(m => {
-        const item = monthlyStats[m] || { samePeriodMonth: getSamePeriodLastYear(m), samePeriodSales: 0, forecastShipment: 0 };
+        const item = monthlyStats[m] || { samePeriodMonth: getSamePeriodLastYear(m), samePeriodSales: 0, forecastShipment: 0, actualSoldInMonth: 0 };
         const priorMonth = item.samePeriodMonth;
         const spSales = item.samePeriodSales;
         const fcShipment = item.forecastShipment;
@@ -2010,14 +1911,24 @@
         totActualShipment += actShipment;
         totReturnQty += retQty;
 
+        const isCurrentMonth = (m === appState.currentMonthYM);
+        const currentMonthTag = isCurrentMonth 
+          ? `<span class="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded">当月·扣减已发</span>`
+          : '';
+
+        const currentMonthDeductHint = isCurrentMonth
+          ? `<div class="text-[10px] text-amber-700 font-normal">已减10.1~10.7已发: ${item.actualSoldInMonth.toLocaleString()} 件</div>`
+          : '';
+
         tbodyHtml += `
-          <tr class="hover:bg-slate-50 transition-colors">
+          <tr class="hover:bg-slate-50 transition-colors ${isCurrentMonth ? 'bg-amber-50/30' : ''}">
             <td class="py-2.5 px-3 font-mono">
               <button type="button" 
-                      class="month-modal-btn flex items-center group font-bold text-sky-700 hover:text-sky-900 transition-colors" 
+                      class="month-modal-btn flex items-center group font-bold ${isCurrentMonth ? 'text-amber-900' : 'text-sky-700'} hover:text-sky-900 transition-colors" 
                       data-month="${m}" 
                       title="点击弹窗查看【${m}】每月销量及同比明细">
                 <span>${m}</span>
+                ${currentMonthTag}
                 <svg class="w-3.5 h-3.5 ml-1 opacity-60 group-hover:opacity-100 text-sky-600 group-hover:translate-x-0.5 transition select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
@@ -2052,7 +1963,10 @@
               </div>
             </td>
 
-            <td class="py-2.5 px-3 text-right font-mono font-black text-sky-900 bg-sky-100/40">${fcShipment.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-black ${isCurrentMonth ? 'text-amber-950 bg-amber-100/50' : 'text-sky-900 bg-sky-100/40'}">
+              ${fcShipment.toLocaleString()}
+              ${currentMonthDeductHint}
+            </td>
             <td class="py-2.5 px-3 text-center font-mono text-slate-500">${(appState.returnRate * 100).toFixed(1)}%</td>
             <td class="py-2.5 px-3 text-right font-mono text-slate-500">${retQty.toLocaleString()}</td>
             <td class="py-2.5 px-3 text-right font-mono font-black text-indigo-700 bg-indigo-50/50">${actShipment.toLocaleString()}</td>
@@ -2105,31 +2019,16 @@
     }
 
     /**
-     * ================= 8. 动态多级表头渲染器 =================
+     * ================= 8. 动态表头与表尾渲染器 =================
      */
-    function renderDynamicTableHeader(dim, isCategoryDim, unfinishedInfo) {
+    function renderDynamicTableHeader(dim, isCategoryDim) {
       const thead = document.getElementById('tableHeader');
       let monthHeadersHtml = '';
 
-      if (unfinishedInfo) {
-        monthHeadersHtml += `
-          <th class="py-2.5 px-2 font-bold text-right text-amber-900 bg-amber-50 border-l border-amber-200 min-w-[95px]">
-            ${unfinishedInfo.ym.slice(5)}月余期同期<br><span class="text-[10px] text-amber-700 font-normal">(${unfinishedInfo.samePeriodYM}余期)</span>
-          </th>
-          <th class="py-2.5 px-2 font-bold text-center text-amber-800 bg-amber-50 min-w-[75px]">
-            近3天日均发货<br><span class="text-[10px] text-amber-700 font-normal">(真实跑速)</span>
-          </th>
-          <th class="py-2.5 px-2 font-bold text-center text-amber-900 bg-amber-100/70 min-w-[75px]">
-            剩余天数<br><span class="text-[10px] text-amber-800 font-normal">(${unfinishedInfo.remainingDays}天)</span>
-          </th>
-          <th class="py-2.5 px-2 font-bold text-right text-amber-950 bg-amber-100/90 border-r border-amber-200 min-w-[85px]">
-            余期预计发货<br><span class="text-[10px] text-amber-900 font-normal">剩余天数×日均</span>
-          </th>
-        `;
-      }
-
       appState.forecastMonths.forEach(m => {
         const samePeriodMonth = getSamePeriodLastYear(m);
+        const isCurrentMonth = (m === appState.currentMonthYM);
+
         monthHeadersHtml += `
           <th class="py-2.5 px-2 font-bold text-right text-slate-600 bg-slate-100 border-l border-slate-200 min-w-[85px]">
             ${m.slice(5)}月 同期<br><span class="text-[10px] text-slate-400 font-normal">(${samePeriodMonth})</span>
@@ -2140,8 +2039,8 @@
           <th class="py-2.5 px-2 font-bold text-center text-sky-800 bg-sky-100/60 min-w-[95px]">
             预计增长率%<br><span class="text-[10px] text-sky-600 font-normal">✎可自填</span>
           </th>
-          <th class="py-2.5 px-2 font-bold text-right text-sky-950 bg-sky-100/70 border-r border-slate-200 min-w-[85px]">
-            预计发货量<br><span class="text-[10px] text-sky-700 font-normal">同期×(1+增幅)</span>
+          <th class="py-2.5 px-2 font-bold text-right ${isCurrentMonth ? 'text-amber-950 bg-amber-100/80' : 'text-sky-950 bg-sky-100/70'} border-r border-slate-200 min-w-[95px]">
+            ${m.slice(5)}月预计发货<br><span class="text-[10px] ${isCurrentMonth ? 'text-amber-800' : 'text-sky-700'} font-normal">${isCurrentMonth ? '扣减当月已发' : '同期×(1+增幅)'}</span>
           </th>
         `;
       });
@@ -2175,10 +2074,10 @@
           <th class="py-3 px-2 font-bold text-right min-w-[80px]">在仓库存</th>
           <th class="py-3 px-2 font-bold text-right min-w-[80px]">在途库存</th>
           <th class="py-3 px-2 font-bold text-right font-black text-slate-900 bg-slate-200/50 min-w-[90px]">总库存</th>
-          <th class="py-3 px-2 font-bold text-right text-teal-800 bg-teal-50/70 min-w-[95px]" title="在仓售罄率 = 期间销量 ÷ (在仓库存 + 期间销量)&#10;春夏季取3-8月发货销量，秋冬季取9-次年2月发货销量">
+          <th class="py-3 px-2 font-bold text-right text-teal-800 bg-teal-50/70 min-w-[95px]" title="在仓售罄率 = 期间销量 ÷ (在仓库存 + 期间销量)">
             在仓售罄率<br><span class="text-[10px] font-normal text-teal-600">期间销/(在仓+期间)</span>
           </th>
-          <th class="py-3 px-2 font-bold text-right text-teal-900 bg-teal-100/70 min-w-[95px]" title="总售罄率 = 期间销量 ÷ (总库存 + 期间销量)&#10;春夏季取3-8月发货销量，秋冬季取9-次年2月发货销量">
+          <th class="py-3 px-2 font-bold text-right text-teal-900 bg-teal-100/70 min-w-[95px]" title="总售罄率 = 期间销量 ÷ (总库存 + 期间销量)">
             总售罄率<br><span class="text-[10px] font-normal text-teal-600">期间销/(总库+期间)</span>
           </th>
           <th class="py-3 px-2 font-bold text-right text-amber-900 bg-amber-100/70 min-w-[125px]">
@@ -2191,10 +2090,10 @@
       `;
     }
 
-    function renderTableFooter(itemCount, sumForecastSales, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, unfinishedInfo, sumPeriodSales) {
+    function renderTableFooter(itemCount, sumForecastSales, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, sumPeriodSales) {
       const tfoot = document.getElementById('tableFoot');
       const netTotalDiff = sumTargetStock - (sumTotalStock - sumActualShipments);
-      const spanCols = (appState.forecastMonths.length * 4) + (unfinishedInfo ? 4 : 0);
+      const spanCols = appState.forecastMonths.length * 4;
       const leadingColSpan = isCategoryDim ? 2 : 1;
 
       const totalWhSellDenom = sumWarehouse + sumPeriodSales;
@@ -2206,7 +2105,7 @@
         <tr class="text-slate-800">
           <td colspan="${leadingColSpan}" class="py-3 px-3.5 sticky left-0 z-10 bg-slate-100 text-center font-bold border-r border-slate-200">全表汇总合计 (${itemCount} 项)</td>
           <td colspan="${spanCols}" class="py-3 px-2 text-center text-slate-400 font-mono text-[11px] border-r border-slate-200">
-            已包含当期未走完余期发货预估与全周期滚动预计发货分解
+            全周期滚动预计发货分解汇总 (10月已扣减当月实发)
           </td>
           <td class="py-3 px-2 text-right font-mono font-black text-sky-950 bg-sky-200/50">${sumForecastSales.toLocaleString()}</td>
           <td class="py-3 px-2 text-right font-mono text-indigo-900 bg-indigo-100/50">${sumActualShipments.toLocaleString()}</td>
@@ -2228,10 +2127,9 @@
     }
 
     /**
-     * ================= 9. 极速秒开弹窗引擎 =================
+     * ================= 9. 弹窗明细与同比引擎 =================
      */
     function openYoYModal(dimKey, dimName) {
-      const unfinishedInfo = appState.fastAggIndex.unfinishedInfo;
       document.getElementById('modalFieldTitle').textContent = `【${dimName}】销售历史与天数对齐同比分析`;
       document.getElementById('modalFieldSubtitle').textContent = `展示 2025 全年、2026 年累计销量及天数精准对齐之同比增速 YoY%`;
 
@@ -2245,20 +2143,18 @@
 
       let sales2026Cum = 0;
       let sales2025Cum = 0;
-      const endMonth = unfinishedInfo ? unfinishedInfo.month : 9;
 
-      for (let m = 1; m <= endMonth; m++) {
+      // 截至 10月7日
+      for (let m = 1; m <= 9; m++) {
         const mStr26 = `2026-${m < 10 ? '0' + m : m}`;
         const mStr25 = `2025-${m < 10 ? '0' + m : m}`;
-
-        if (unfinishedInfo && m === unfinishedInfo.month) {
-          sales2026Cum += getAggSales(dimKey, mStr26, unfinishedInfo.latestDay);
-          sales2025Cum += getAggSales(dimKey, mStr25, unfinishedInfo.latestDay);
-        } else {
-          sales2026Cum += getAggSales(dimKey, mStr26, null);
-          sales2025Cum += getAggSales(dimKey, mStr25, null);
-        }
+        sales2026Cum += getAggSales(dimKey, mStr26, null);
+        sales2025Cum += getAggSales(dimKey, mStr25, null);
       }
+
+      // 10月对齐前7天
+      sales2026Cum += getAggSales(dimKey, '2026-10', 7);
+      sales2025Cum += getAggSales(dimKey, '2025-10', 7);
 
       let cumYoYRate = 0;
       let cumYoYText = '0.0%';
@@ -2271,23 +2167,18 @@
       document.getElementById('modalMetric2026Cum').textContent = `${sales2026Cum.toLocaleString()} 件`;
       document.getElementById('modalMetric2025Cum').textContent = `${sales2025Cum.toLocaleString()} 件`;
 
-      if (unfinishedInfo) {
-        document.getElementById('modalMetric2026CumSub').textContent = `2026.01.01 ~ 09.${unfinishedInfo.latestDay}`;
-        document.getElementById('modalMetric2025CumSub').textContent = `2025.01.01 ~ 09.${unfinishedInfo.latestDay} (对齐)`;
-      } else {
-        document.getElementById('modalMetric2026CumSub').textContent = `2026 全期累计`;
-        document.getElementById('modalMetric2025CumSub').textContent = `2025 同期累计`;
-      }
+      document.getElementById('modalMetric2026CumSub').textContent = `2026.01.01 ~ 10.07`;
+      document.getElementById('modalMetric2025CumSub').textContent = `2025.01.01 ~ 10.07 (对齐)`;
 
       const cumYoYEl = document.getElementById('modalMetricCumYoY');
       cumYoYEl.textContent = cumYoYText;
       cumYoYEl.className = `text-base sm:text-lg font-black mt-0.5 ${cumYoYRate >= 0 ? 'text-emerald-700' : 'text-rose-700'}`;
 
       const past12Months = [
-        "2025-10", "2025-11", "2025-12",
+        "2025-11", "2025-12",
         "2026-01", "2026-02", "2026-03",
         "2026-04", "2026-05", "2026-06",
-        "2026-07", "2026-08", "2026-09"
+        "2026-07", "2026-08", "2026-09", "2026-10"
       ];
 
       const chartLabels = [];
@@ -2298,15 +2189,15 @@
       let tableHtml = '';
 
       past12Months.forEach(m => {
-        const isThisUnfinished = unfinishedInfo && m === unfinishedInfo.ym;
+        const isCurrentMonth = (m === '2026-10');
         let curSales = 0;
         let priorSalesAligned = 0;
         let priorSalesFull = 0;
 
-        if (isThisUnfinished) {
-          curSales = getAggSales(dimKey, m, unfinishedInfo.latestDay);
-          priorSalesAligned = getAggSales(dimKey, unfinishedInfo.samePeriodYM, unfinishedInfo.latestDay);
-          priorSalesFull = getAggSales(dimKey, unfinishedInfo.samePeriodYM, null);
+        if (isCurrentMonth) {
+          curSales = getAggSales(dimKey, m, 7);
+          priorSalesAligned = getAggSales(dimKey, '2025-10', 7);
+          priorSalesFull = getAggSales(dimKey, '2025-10', null);
         } else {
           curSales = getAggSales(dimKey, m, null);
           const pMonth = getSamePeriodLastYear(m);
@@ -2335,7 +2226,7 @@
           badgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">同比持平</span>`;
         }
 
-        chartLabels.push(isThisUnfinished ? `${m}(至${unfinishedInfo.latestDay}日)` : m);
+        chartLabels.push(isCurrentMonth ? `${m}(至07日)` : m);
         currentData.push(curSales);
         priorData.push(priorSalesAligned);
         growthRates.push(Number(rate.toFixed(1)));
@@ -2343,12 +2234,12 @@
         tableHtml += `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="py-2 px-3 font-semibold font-mono text-slate-800">
-              ${m} ${isThisUnfinished ? `<span class="text-[10px] text-amber-800 bg-amber-100 px-1 py-0.2 rounded font-bold select-none">至${unfinishedInfo.latestDay}日</span>` : ''}
+              ${m} ${isCurrentMonth ? `<span class="text-[10px] text-amber-800 bg-amber-100 px-1 py-0.2 rounded font-bold select-none">至10.07日</span>` : ''}
             </td>
             <td class="py-2 px-3 text-right font-mono font-bold text-slate-900">${curSales.toLocaleString()}</td>
             <td class="py-2 px-3 text-right font-mono text-slate-600">
               ${priorSalesAligned.toLocaleString()}
-              ${isThisUnfinished ? `<span class="text-[10px] text-slate-400 block font-normal">（全月：${priorSalesFull.toLocaleString()}）</span>` : ''}
+              ${isCurrentMonth ? `<span class="text-[10px] text-slate-400 block font-normal">（全月：${priorSalesFull.toLocaleString()}）</span>` : ''}
             </td>
             <td class="py-2 px-3 text-right font-mono font-medium ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
               ${diff >= 0 ? '+' : ''}${diff.toLocaleString()}
@@ -2372,16 +2263,14 @@
     function openMonthModal(monthStr) {
       openYoYModal('ALL', `全盘汇总 · ${monthStr}`);
 
-      const unfinishedInfo = appState.fastAggIndex.unfinishedInfo;
-      const isUnfinishedSelected = (unfinishedInfo && monthStr === unfinishedInfo.ym);
-
       const breakdownSection = document.getElementById('modalMonthCategoryBreakdownSection');
       const breakdownTitle = document.getElementById('modalMonthBreakdownTitle');
       const breakdownTbody = document.getElementById('modalMonthCategoryTableBody');
 
       breakdownSection.classList.remove('hidden');
-      breakdownTitle.textContent = isUnfinishedSelected 
-        ? `【${monthStr}】未走完余期发货预估与同期天数对齐明细表` 
+      const isCurrentMonth = (monthStr === appState.currentMonthYM);
+      breakdownTitle.textContent = isCurrentMonth 
+        ? `【${monthStr}】当前所在月：各品类销售历史与发货预测明细表 (已扣减当月实际已发)` 
         : `【${monthStr}】各品类销售历史与发货预测明细表`;
 
       const samePeriodMonth = getSamePeriodLastYear(monthStr);
@@ -2393,31 +2282,23 @@
         const subCat = item.subCategory || '-';
         const catName = item.category || item.name;
 
-        let spSales = 0;
-        let fcShipment = 0;
-        let growthRateText = '';
+        const spSales = getAggSales(dimKey, samePeriodMonth, null);
+        const userCfg = (appState.userConfig[appState.currentDimension] && appState.userConfig[appState.currentDimension][dimKey]) || {};
+        const growthRate = (userCfg.monthlyRates && userCfg.monthlyRates[monthStr] !== undefined)
+          ? userCfg.monthlyRates[monthStr]
+          : (appState.defaultMonthlyGrowth[monthStr] !== undefined ? appState.defaultMonthlyGrowth[monthStr] : 0.10);
 
-        if (isUnfinishedSelected) {
-          const spFull = getAggSales(dimKey, unfinishedInfo.samePeriodYM, null);
-          const spAligned = getAggSales(dimKey, unfinishedInfo.samePeriodYM, unfinishedInfo.latestDay);
-          spSales = Math.max(0, spFull - spAligned);
+        let fullForecast = spSales > 0 ? Math.round(spSales * (1 + growthRate)) : 0;
+        let fcShipment = fullForecast;
 
-          const itemDailyAvg = getAggDailyAvg(dimKey, unfinishedInfo.last3Dates);
-          fcShipment = Math.round(unfinishedInfo.remainingDays * itemDailyAvg);
-          growthRateText = `${itemDailyAvg.toFixed(1)}/天(余${unfinishedInfo.remainingDays}天)`;
-        } else {
-          spSales = getAggSales(dimKey, samePeriodMonth, null);
-          const userCfg = (appState.userConfig[appState.currentDimension] && appState.userConfig[appState.currentDimension][dimKey]) || {};
-          const growthRate = (userCfg.monthlyRates && userCfg.monthlyRates[monthStr] !== undefined)
-            ? userCfg.monthlyRates[monthStr]
-            : (appState.defaultMonthlyGrowth[monthStr] !== undefined ? appState.defaultMonthlyGrowth[monthStr] : 0.10);
-
-          fcShipment = spSales > 0 ? Math.round(spSales * (1 + growthRate)) : 0;
-          growthRateText = (growthRate >= 0 ? '+' : '') + Math.round(growthRate * 100) + '%';
+        if (isCurrentMonth) {
+          const actualSold = getCurrentMonthActualSold(dimKey);
+          fcShipment = Math.max(0, fullForecast - actualSold);
         }
 
         const actShipment = Math.round(fcShipment * (1 - appState.returnRate));
         const diff = fcShipment - spSales;
+        const growthRateText = (growthRate >= 0 ? '+' : '') + Math.round(growthRate * 100) + '%';
 
         breakdownHtml += `
           <tr class="hover:bg-slate-50 transition-colors">
@@ -2425,7 +2306,10 @@
             <td class="py-2 px-3 font-bold text-sky-800">${catName}</td>
             <td class="py-2 px-3 text-right font-mono text-slate-600">${spSales.toLocaleString()}</td>
             <td class="py-2 px-3 text-center font-mono font-bold text-sky-700">${growthRateText}</td>
-            <td class="py-2 px-3 text-right font-mono font-bold text-sky-950">${fcShipment.toLocaleString()}</td>
+            <td class="py-2 px-3 text-right font-mono font-bold text-sky-950">
+              ${fcShipment.toLocaleString()}
+              ${isCurrentMonth ? `<span class="text-[10px] text-amber-700 block font-normal">(全月:${fullForecast})</span>` : ''}
+            </td>
             <td class="py-2 px-3 text-right font-mono font-bold text-indigo-700">${actShipment.toLocaleString()}</td>
             <td class="py-2 px-3 text-right font-mono font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
               ${diff >= 0 ? '+' : ''}${diff.toLocaleString()}
@@ -2527,28 +2411,17 @@
         return sum;
       };
 
-      const unfinishedInfo = appState.fastAggIndex.unfinishedInfo;
-      const latestYM = (unfinishedInfo && unfinishedInfo.ym) || 
-                       (appState.fastAggIndex.latestSalesDate && appState.fastAggIndex.latestSalesDate.slice(0, 7)) || 
-                       '2026-09';
-      const [latestY, latestM] = latestYM.split('-').map(Number);
-
-      const past13Months = [];
-      for (let i = 12; i >= 0; i--) {
-        let m = latestM - i;
-        let y = latestY;
-        while (m <= 0) {
-          m += 12;
-          y -= 1;
-        }
-        past13Months.push(`${y}-${m < 10 ? '0' + m : m}`);
-      }
+      const past13Months = [
+        "2025-09", "2025-10", "2025-11", "2025-12",
+        "2026-01", "2026-02", "2026-03", "2026-04",
+        "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"
+      ];
 
       const forecastMonths = appState.forecastMonths;
 
       const labels = [
         ...past13Months,
-        ...forecastMonths.map(m => `${m} (预测)`)
+        ...forecastMonths.map(m => m === '2026-10' ? '2026-10(当月)' : `${m}(预测)`)
       ];
 
       const lastYearData = [];
@@ -2582,7 +2455,15 @@
         const spSales = getFilteredSales(spYM);
         const growthRate = appState.defaultMonthlyGrowth[m] !== undefined ? appState.defaultMonthlyGrowth[m] : 0.10;
 
-        const fcShipment = spSales > 0 ? Math.round(spSales * (1 + growthRate)) : 0;
+        let baseFc = spSales > 0 ? Math.round(spSales * (1 + growthRate)) : 0;
+        let fcShipment = baseFc;
+
+        if (m === appState.currentMonthYM) {
+          let actualSold = 0;
+          dimItems.forEach(item => { actualSold += getCurrentMonthActualSold(item.key); });
+          fcShipment = Math.max(0, baseFc - actualSold);
+        }
+
         const actShipment = Math.round(fcShipment * (1 - appState.returnRate));
 
         lastYearData.push(spSales);
@@ -2623,7 +2504,7 @@
               fill: false
             },
             {
-              label: '今年预估发货量',
+              label: '预计发货量 (10月扣减已发)',
               data: forecastData,
               borderColor: '#2563eb',
               backgroundColor: 'rgba(37, 99, 235, 0.1)',
@@ -2744,7 +2625,7 @@
               borderRadius: 4
             },
             {
-              label: '预估实际发货量(含余期)',
+              label: '预估实际发货量',
               data: shipmentList,
               backgroundColor: '#818cf8',
               borderRadius: 4
@@ -2797,7 +2678,7 @@
     }
 
     /**
-     * ================= 11. 全局交互 =================
+     * ================= 11. 全局交互与下载绑定 =================
      */
     function setupEvents() {
       document.getElementById('dimensionTabGroup').addEventListener('click', (e) => {
@@ -2841,7 +2722,6 @@
         }
       });
 
-      // 树形层级多选批量设置函数
       const applyCategorySelection = (keys) => {
         appState.filterCategories = [...keys];
         const allKeys = getAllCategoryLeafKeys();
@@ -3013,9 +2893,30 @@
       });
 
       document.getElementById('btnLogoutBtn').addEventListener('click', logoutSystem);
+      document.getElementById('btnDownloadHtml').addEventListener('click', downloadCurrentHtmlFile);
       document.getElementById('btnDownloadTemplate').addEventListener('click', exportSampleExcelTemplate);
       document.getElementById('btnExportResult').addEventListener('click', exportCurrentModelExcel);
       document.getElementById('excelFileInput').addEventListener('change', handleExcelUpload);
+    }
+
+    // 关键功能：直接将当前完整系统代码下载为可离线运行的.html文件
+    function downloadCurrentHtmlFile() {
+      try {
+        const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `品类季节独立预测与库存平衡模型_杨良涛_${new Date().toISOString().slice(0, 10)}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('模型HTML网页文件已成功下载，双击即可直接离线使用！');
+      } catch (err) {
+        console.error('下载HTML文件失败:', err);
+        showToast('下载HTML失败，请复制页面源码保存');
+      }
     }
 
     function exportSampleExcelTemplate() {
@@ -3059,7 +2960,6 @@
         }
 
         const isCategoryDim = (appState.currentDimension === '品类');
-        const unfinishedInfo = appState.fastAggIndex.unfinishedInfo;
         const rows = [];
 
         const parseNum = (val) => {
@@ -3090,13 +2990,6 @@
               rowObj["二级类目"] = match ? match[1] : cleanStr(tds[0].innerText);
               rowObj["四级类目"] = "【小计汇总】";
 
-              if (unfinishedInfo) {
-                rowObj[`${unfinishedInfo.ym}余期同期销量`] = "-";
-                rowObj[`${unfinishedInfo.ym}近3天日均发货`] = "-";
-                rowObj[`${unfinishedInfo.ym}剩余天数`] = "-";
-                rowObj[`${unfinishedInfo.ym}余期预计发货量`] = "-";
-              }
-
               appState.forecastMonths.forEach(m => {
                 rowObj[`${m}去年同期`] = "-";
                 rowObj[`${m}参考实际增幅`] = "-";
@@ -3104,7 +2997,7 @@
                 rowObj[`${m}预计发货量`] = "-";
               });
 
-              rowObj["预计发货量总计(含余期)"] = parseNum(tds[2].innerText);
+              rowObj["预计发货量总计"] = parseNum(tds[2].innerText);
               rowObj["预估实际发货量"] = parseNum(tds[3].innerText);
               rowObj["在仓库存"] = parseNum(tds[4].innerText);
               rowObj["在途库存"] = parseNum(tds[5].innerText);
@@ -3130,14 +3023,6 @@
             var colIdx = 1;
           }
 
-          if (unfinishedInfo) {
-            rowObj[`${unfinishedInfo.ym}余期同期销量`] = parseNum(tds[colIdx].innerText);
-            rowObj[`${unfinishedInfo.ym}近3天日均发货`] = cleanStr(tds[colIdx + 1].innerText);
-            rowObj[`${unfinishedInfo.ym}剩余天数`] = cleanStr(tds[colIdx + 2].innerText);
-            rowObj[`${unfinishedInfo.ym}余期预计发货量`] = parseNum(tds[colIdx + 3].innerText);
-            colIdx += 4;
-          }
-
           appState.forecastMonths.forEach(m => {
             rowObj[`${m}去年同期`] = parseNum(tds[colIdx].innerText);
             rowObj[`${m}参考实际增幅`] = cleanStr(tds[colIdx + 1].innerText);
@@ -3147,7 +3032,7 @@
             colIdx += 4;
           });
 
-          rowObj["预计发货量总计(含余期)"] = parseNum(tds[colIdx].innerText);
+          rowObj["预计发货量总计"] = parseNum(tds[colIdx].innerText);
           rowObj["预估实际发货量"] = parseNum(tds[colIdx + 1].innerText);
           rowObj["在仓库存"] = parseNum(tds[colIdx + 2].innerText);
           rowObj["在途库存"] = parseNum(tds[colIdx + 3].innerText);
@@ -3176,13 +3061,6 @@
               rowTotal[appState.currentDimension + "名称"] = cleanStr(tTds[0].innerText) || "全表汇总合计";
             }
 
-            if (unfinishedInfo) {
-              rowTotal[`${unfinishedInfo.ym}余期同期销量`] = "-";
-              rowTotal[`${unfinishedInfo.ym}近3天日均发货`] = "-";
-              rowTotal[`${unfinishedInfo.ym}剩余天数`] = "-";
-              rowTotal[`${unfinishedInfo.ym}余期预计发货量`] = "-";
-            }
-
             appState.forecastMonths.forEach(m => {
               rowTotal[`${m}去年同期`] = "-";
               rowTotal[`${m}参考实际增幅`] = "-";
@@ -3190,7 +3068,7 @@
               rowTotal[`${m}预计发货量`] = "-";
             });
 
-            rowTotal["预计发货量总计(含余期)"] = parseNum(tTds[2].innerText);
+            rowTotal["预计发货量总计"] = parseNum(tTds[2].innerText);
             rowTotal["预估实际发货量"] = parseNum(tTds[3].innerText);
             rowTotal["在仓库存"] = parseNum(tTds[4].innerText);
             rowTotal["在途库存"] = parseNum(tTds[5].innerText);
@@ -3240,7 +3118,7 @@
           const sDate = matchSheet(["日期表", "日期", "时间"]);
 
           if (!sBase) {
-            alert('上传的Excel中未识别到【基础资料表】或【商品资料表】，请确认包含表头：货号、季节、二级类目、品类(或四级类目)、单里/绒里！');
+            showToast('上传的Excel中未识别到【基础资料表】或【商品资料表】！');
             return;
           }
 
@@ -3269,7 +3147,7 @@
           showToast(`已成功载入 ${appState.baseInfo.length} 条基础SKU数据`);
         } catch (err) {
           console.error(err);
-          alert('解析 Excel 失败，请检查文件格式。');
+          showToast('解析 Excel 失败，请检查文件格式。');
         }
       };
       reader.readAsArrayBuffer(file);
