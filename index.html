@@ -11,7 +11,53 @@
   <!-- Chart.js 绘制走势与对比图 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* 滚动条美化 */
+     /* 浅色商务登录封面：纯 CSS 绘制背景纹理，不依赖外部图片 */
+     #loginAuthOverlay.login-cover {
+       isolation: isolate;
+       overflow: hidden;
+       background:
+         radial-gradient(ellipse at 12% 18%, rgba(125, 211, 252, .38) 0%, rgba(125, 211, 252, 0) 34%),
+         radial-gradient(ellipse at 88% 82%, rgba(165, 180, 252, .28) 0%, rgba(165, 180, 252, 0) 34%),
+         linear-gradient(132deg, #f8fafc 0%, #eff6ff 48%, #e0f2fe 100%);
+     }
+     #loginAuthOverlay.login-cover::before {
+       content: "";
+       position: absolute;
+       z-index: 0;
+       inset: -12%;
+       pointer-events: none;
+       opacity: .72;
+       background-image:
+         linear-gradient(rgba(100, 116, 139, .075) 1px, transparent 1px),
+         linear-gradient(90deg, rgba(100, 116, 139, .075) 1px, transparent 1px),
+         repeating-radial-gradient(ellipse at 22% 43%, transparent 0 47px, rgba(14, 165, 233, .12) 48px 49px, transparent 51px 72px),
+         repeating-radial-gradient(ellipse at 80% 68%, transparent 0 66px, rgba(99, 102, 241, .075) 67px 68px, transparent 70px 94px);
+       background-size: 42px 42px, 42px 42px, 760px 540px, 820px 620px;
+       transform: rotate(-5deg);
+     }
+     #loginAuthOverlay.login-cover::after {
+       content: "";
+       position: absolute;
+       z-index: 0;
+       inset: 0;
+       pointer-events: none;
+       background: linear-gradient(118deg, transparent 0 49%, rgba(255,255,255,.42) 49.2%, transparent 49.7% 100%);
+     }
+     #loginAuthOverlay .login-card {
+       position: relative;
+       z-index: 1;
+       background: rgba(255, 255, 255, .88);
+       border: 1px solid rgba(255, 255, 255, .96);
+       box-shadow: 0 28px 80px rgba(51, 65, 85, .16), 0 3px 12px rgba(14, 165, 233, .07);
+       backdrop-filter: blur(22px);
+       -webkit-backdrop-filter: blur(22px);
+     }
+     #loginAuthOverlay .login-brand-mark {
+       background: linear-gradient(135deg, #0284c7 0%, #38bdf8 54%, #818cf8 100%);
+       box-shadow: 0 12px 26px rgba(14, 165, 233, .22);
+     }
+
+     /* 滚动条美化 */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -43,38 +89,38 @@
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans overflow-hidden select-text" id="mainBody">
 
   <!-- ==================== 1. 账号与密码登录验证门禁 ==================== -->
-  <div id="loginAuthOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 bg-cover bg-center bg-no-repeat" style="background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75)), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2160&auto=format&fit=crop');">
-    <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/40 w-full max-w-md p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+  <div id="loginAuthOverlay" class="login-cover fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 bg-center bg-no-repeat">
+    <div class="login-card rounded-2xl w-full max-w-md p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
       <div class="text-center space-y-2">
-        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 font-black text-xl">
+        <div class="login-brand-mark w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-white font-black text-xl">
           S&OP
         </div>
         <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">品类季节独立预测与库存平衡模型</h2>
         <p class="text-xs text-slate-500">企业级鞋服商品计划与库存平衡决策系统</p>
       </div>
 
-      <!-- 提示信息条 -->
+      <!-- 提示信息条：完全统一使用商务规范职能称谓 -->
       <div class="bg-sky-50 border border-sky-200 rounded-xl p-3 text-xs text-sky-800 flex items-start space-x-2">
         <svg class="w-4 h-4 text-sky-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <div class="space-y-0.5">
-          <div class="font-bold">系统访问受限，请输入凭证：</div>
-          <div class="text-slate-600">管理员账号：<span class="font-mono font-bold text-sky-700">14599</span> 或 <span class="font-mono font-bold text-sky-700">10211</span></div>
+          <div class="font-bold">企业业务工作台 · 身份验证</div>
+          <div class="text-slate-600">账号凭证：<span class="font-mono font-bold text-sky-700">10211</span>（战略决策） 与 <span class="font-mono font-bold text-sky-700">14599</span>（计划统筹）</div>
         </div>
       </div>
 
       <!-- 登录表单 -->
       <form id="loginForm" class="space-y-4" onsubmit="handleLoginSubmit(event)">
-        <!-- 访问账号 (下拉框方式) -->
+        <!-- 访问账号 (下拉框方式，精细化中英文结合的企业商务格式) -->
         <div class="space-y-1">
           <label class="text-xs font-semibold text-slate-700" for="usernameInput">访问账号 (Username)</label>
           <div class="relative">
             <select id="usernameInput" required 
               class="w-full pl-9 pr-9 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition cursor-pointer appearance-none">
               <option value="" disabled selected>请选择登录账号...</option>
-              <option value="14599">14599 (管理员)</option>
-              <option value="10211">10211 (管理员)</option>
+              <option value="10211">10211（战略决策 · Strategy）</option>
+              <option value="14599">14599（计划统筹 · Planning）</option>
             </select>
             <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -138,7 +184,7 @@
 
         <!-- 动作按钮区：包含Excel模板、HTML离线下载、上传与导出 -->
         <div class="flex items-center space-x-2 select-none">
-          <!-- 新增：直接下载当前页面完整HTML离线文件 -->
+          <!-- 直接下载当前页面完整HTML离线文件 -->
           <button id="btnDownloadHtml" title="下载离线可运行的完整HTML系统文件" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition-colors border border-emerald-300 shadow-xs">
             <svg class="w-3.5 h-3.5 mr-1.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -200,7 +246,7 @@
           <div class="text-xs space-y-1">
             <div class="font-semibold text-sky-200">鞋服季节性预测算法 & 发货/库存平衡模型逻辑：</div>
             <div class="text-slate-300 flex flex-wrap gap-x-4 gap-y-1">
-              <span>• <strong class="text-sky-300 font-mono">当月预计发货量</strong> = 去年同期销量 × (1 + 自填增长率) <span class="text-amber-300 font-bold">【注：当前所在月(10月)已自动扣减当月实际已发(10.1~10.7)】</span></span>
+              <span>• <strong class="text-sky-300 font-mono">当月预计发货量</strong> = 去年同期销量 × (1 + 自填增长率) <span id="currentMonthFormulaHint" class="text-amber-300 font-bold">【注：当月扣减日期随销售数据自动更新】</span></span>
               <span>• <strong class="text-emerald-300 font-mono">较同期净增减</strong> = 当月预计发货量 − 去年同期实际销量</span>
               <span>• <strong class="text-indigo-300 font-mono">预估实际发货量</strong> = 预计发货量总计 × (1 - 退货率)</span>
               <span>• <strong class="text-teal-300 font-mono">在仓售罄率</strong> = 期间销量 ÷ (在仓库存 + 期间销量)</span>
@@ -303,7 +349,7 @@
           </select>
         </div>
 
-        <!-- 需求1：滚动预期期数选项保持2、3、4、6个月，强制包含当前月(10月) -->
+        <!-- 滚动预期期数选项保持2、3、4、6个月，强制包含当前月(10月) -->
         <div class="space-y-1">
           <label for="horizonSelect" class="text-xs font-semibold text-slate-600 select-none">滚动预测期数 (含当月10月)</label>
           <select id="horizonSelect" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white transition">
@@ -328,7 +374,7 @@
         </div>
       </div>
 
-      <!-- 需求1：各月全局预计增长率设置（推导各月预计发货量），一定要包含10月 -->
+      <!-- 各月全局预计增长率设置（推导各月预计发货量），包含10月 -->
       <div class="pt-3 border-t border-dashed border-slate-200 flex flex-wrap items-center gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200 select-none" id="monthlyGrowthControlBar"></div>
     </section>
 
@@ -390,7 +436,7 @@
               <span class="w-2.5 h-2.5 rounded bg-sky-600 inline-block mr-2"></span>
               按月统计分析表 (月度发货分解与同期对比)
             </h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">较同期净增减 = 当月预计发货量 − 去年同期实际销量；10月为当前所在月，预计发货量已扣减当月实际已发（10.1~10.7）；单击月份可秒级调取历史明细</p>
+            <p id="monthlyAnalysisDescription" class="text-[11px] text-slate-400 mt-0.5">较同期净增减 = 当月预计发货量 − 去年同期实际销量；当前月预计发货量已按销售数据中的最新日期扣减当月实际已发；单击月份可调取历史明细</p>
           </div>
           <div class="flex items-center space-x-2 text-xs select-text">
             <span class="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-medium shadow-xs">
@@ -398,10 +444,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
               数据更新时间：
-              <span id="dataUpdateLatestDate" class="font-mono font-bold text-sky-700 ml-1">2026-10-07</span>
+              <span id="dataUpdateLatestDate" class="font-mono font-bold text-sky-700 ml-1">自动识别中</span>
             </span>
             <span id="currentMonthBadge" class="px-2 py-1 text-[11px] font-bold bg-sky-100 text-sky-900 border border-sky-300 rounded-lg">
-              当前所在月：10月 (更新至10.7日，已扣减当月已发)
+              当前所在月：自动识别中
             </span>
           </div>
         </div>
@@ -539,17 +585,17 @@
         <!-- 概览卡片 -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div class="text-[11px] text-slate-500 font-medium">2025 全年总销量</div>
+            <div id="modalMetric2025FullLabel" class="text-[11px] text-slate-500 font-medium">2025 全年总销量</div>
             <div class="text-base sm:text-lg font-bold text-slate-900 mt-0.5" id="modalMetric2025Full">0 件</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">2025.01 ~ 2025.12</div>
+            <div id="modalMetric2025FullPeriod" class="text-[10px] text-slate-400 mt-0.5">2025.01 ~ 2025.12</div>
           </div>
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div class="text-[11px] text-slate-500 font-medium">2026 年累计销量</div>
+            <div id="modalMetric2026CumLabel" class="text-[11px] text-slate-500 font-medium">2026 年累计销量</div>
             <div class="text-base sm:text-lg font-bold text-indigo-700 mt-0.5" id="modalMetric2026Cum">0 件</div>
-            <div class="text-[10px] text-indigo-500 mt-0.5" id="modalMetric2026CumSub">截至10月07日</div>
+            <div class="text-[10px] text-indigo-500 mt-0.5" id="modalMetric2026CumSub">截至当月销售数据最新日期</div>
           </div>
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div class="text-[11px] text-slate-500 font-medium">2025 同期累计销量</div>
+            <div id="modalMetric2025CumLabel" class="text-[11px] text-slate-500 font-medium">2025 同期累计销量</div>
             <div class="text-base sm:text-lg font-bold text-slate-600 mt-0.5" id="modalMetric2025Cum">0 件</div>
             <div class="text-[10px] text-slate-500 font-semibold mt-0.5" id="modalMetric2025CumSub">天数精准对齐</div>
           </div>
@@ -599,7 +645,7 @@
         <div id="modalMonthCategoryBreakdownSection" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm hidden">
           <div class="p-2.5 bg-sky-50 border-b border-sky-200 font-bold text-xs text-sky-900 flex justify-between items-center">
             <span id="modalMonthBreakdownTitle">【所选月份】各品类销售历史与发货预测明细</span>
-            <span class="text-[11px] font-normal text-sky-700">10月预计发货量已扣减当月已发实发数</span>
+            <span id="modalBreakdownDateHint" class="text-[11px] font-normal text-sky-700">当月预计发货量已扣减销售数据最新日期前的实际已发</span>
           </div>
           <div class="overflow-x-auto max-h-72">
             <table class="w-full text-left text-xs border-collapse">
@@ -684,7 +730,8 @@
         totalMonthlyDayAgg: {},
         dateTotals: {},
         itemDateTotals: {},
-        latestSalesDate: '2026-10-07',
+        latestSalesDate: '',
+        latestCurrentMonthSalesDate: '',
         currentMonthSalesAgg: {},
         totalCurrentMonthSales: 0
       }
@@ -700,6 +747,10 @@
     const VALID_ACCOUNTS = {
       '14599': '888888',
       '10211': 'abc@10211'
+    };
+    const ACCOUNT_ROLES = {
+      '10211': '战略决策',
+      '14599': '计划统筹'
     };
 
     function checkAuthOnLoad() {
@@ -736,7 +787,7 @@
           overlay.classList.remove('opacity-0', 'pointer-events-none');
         }, 300);
 
-        showToast(`验证通过！欢迎进入系统，${u}`);
+        showToast(`验证通过！欢迎进入系统（${ACCOUNT_ROLES[u] || '授权人员'}）`);
       } else {
         errBox.classList.remove('hidden');
         document.getElementById('passwordInput').value = '';
@@ -779,6 +830,70 @@
       return `${y}-${parts[1]}`;
     }
 
+    // 当前月截止日期始终从已导入的销售数据中取得，不使用固定日期
+    function getCurrentMonthSalesDateInfo() {
+      const currentYM = appState.currentMonthYM || '';
+      const index = appState.fastAggIndex || {};
+      let date = index.latestCurrentMonthSalesDate || '';
+      if (!date || date.slice(0, 7) !== currentYM) {
+        const latest = index.latestSalesDate || '';
+        date = latest.slice(0, 7) === currentYM ? latest : '';
+      }
+      const ymParts = currentYM.split('-');
+      const year = Number(ymParts[0]) || 2026;
+      const month = Number(ymParts[1]) || 10;
+      const dateMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      const day = dateMatch ? Number(dateMatch[3]) : 0;
+      return {
+        ym: currentYM,
+        year,
+        month,
+        day,
+        date,
+        hasDate: day >= 1 && day <= 31,
+        monthLabel: `${month}月`,
+        dateLabel: day ? `${month}.${day}` : `${month}月暂无销售日期`,
+        rangeLabel: day ? `${month}.1~${month}.${day}` : `${month}月暂无当月销售日期`,
+        fullDateLabel: day ? `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}` : ''
+      };
+    }
+
+    function updateDynamicSalesDateLabels() {
+      const info = getCurrentMonthSalesDateInfo();
+      const index = appState.fastAggIndex || {};
+      const displayDate = info.fullDateLabel || index.latestSalesDate || '暂无销售日期';
+      const dateEl = document.getElementById('dataUpdateLatestDate');
+      if (dateEl) dateEl.textContent = displayDate;
+
+      const badge = document.getElementById('currentMonthBadge');
+      if (badge) {
+        badge.textContent = info.hasDate
+          ? `当前所在月：${info.monthLabel}（更新至${info.dateLabel}日，已扣减当月已发）`
+          : `当前所在月：${info.monthLabel}（未识别到当月销售日期）`;
+      }
+
+      const formulaHint = document.getElementById('currentMonthFormulaHint');
+      if (formulaHint) {
+        formulaHint.textContent = info.hasDate
+          ? `【注：当前所在月(${info.monthLabel})已自动扣减当月实际已发(${info.rangeLabel})】`
+          : `【注：当月扣减日期将根据销售数据自动识别】`;
+      }
+
+      const monthlyNote = document.getElementById('monthlyAnalysisDescription');
+      if (monthlyNote) {
+        monthlyNote.textContent = info.hasDate
+          ? `较同期净增减 = 当月预计发货量 − 去年同期实际销量；${info.monthLabel}预计发货量已扣减销售数据中截至${info.dateLabel}日的当月实际已发；单击月份可调取历史明细`
+          : `较同期净增减 = 当月预计发货量 − 去年同期实际销量；当前月已发扣减日期由销售数据自动识别；单击月份可调取历史明细`;
+      }
+
+      const modalBreakdownDateHint = document.getElementById('modalBreakdownDateHint');
+      if (modalBreakdownDateHint) {
+        modalBreakdownDateHint.textContent = info.hasDate
+          ? `${info.monthLabel}预计发货量已扣减截至${info.dateLabel}日的当月实际已发`
+          : `${info.monthLabel}预计发货量将依据已导入销售数据扣减当月实际已发`;
+      }
+    }
+
     /**
      * ================= 3. 数据规范化与单趟全局哈希构建 =================
      */
@@ -819,13 +934,17 @@
       });
 
       let maxDate = '';
+      let maxCurrentMonthDate = '';
 
       for (let i = 0; i < len; i++) {
         const row = sales[i];
         const d = row._d;
         if (!d || d.length < 7) continue;
 
-        if (d > maxDate) maxDate = d;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d > maxDate) maxDate = d;
+        if (d.slice(0, 7) === appState.currentMonthYM && /^\d{4}-\d{2}-\d{2}$/.test(d) && d > maxCurrentMonthDate) {
+          maxCurrentMonthDate = d;
+        }
 
         const sku = row._sku;
         const itemKey = skuToItemKey[sku];
@@ -833,19 +952,19 @@
         const day = row._day;
         const q = row._q;
 
-        // 关键：仅对满足外部切片器（季节、单里/绒里、品类）筛选的货项进行统计
+        // 仅对满足外部切片器（季节、单里/绒里、品类）筛选的货项进行统计
         if (itemKey) {
           salesMonthlyAgg[itemKey][ym] = (salesMonthlyAgg[itemKey][ym] || 0) + q;
           if (!salesMonthlyDayAgg[itemKey][ym]) salesMonthlyDayAgg[itemKey][ym] = {};
           salesMonthlyDayAgg[itemKey][ym][day] = (salesMonthlyDayAgg[itemKey][ym][day] || 0) + q;
           itemDateTotals[itemKey][d] = (itemDateTotals[itemKey][d] || 0) + q;
 
-          // 统计当前所在月份(2026-10)的累计已发货量
+          // 统计当前所在月份的累计已发货量
           if (ym === appState.currentMonthYM) {
             currentMonthSalesAgg[itemKey] = (currentMonthSalesAgg[itemKey] || 0) + q;
           }
 
-          // 全盘总月度/天度汇总严格同步外部切片器范围，弹窗打开时将精准对应
+          // 全盘总月度/天度汇总严格同步外部切片器范围
           totalMonthlyAgg[ym] = (totalMonthlyAgg[ym] || 0) + q;
           if (!totalMonthlyDayAgg[ym]) totalMonthlyDayAgg[ym] = {};
           totalMonthlyDayAgg[ym][day] = (totalMonthlyDayAgg[ym][day] || 0) + q;
@@ -864,7 +983,8 @@
         totalMonthlyDayAgg,
         dateTotals,
         itemDateTotals,
-        latestSalesDate: maxDate || '2026-10-07',
+        latestSalesDate: maxDate || '',
+        latestCurrentMonthSalesDate: maxCurrentMonthDate,
         currentMonthSalesAgg,
         totalCurrentMonthSales
       };
@@ -900,7 +1020,7 @@
     }
 
     /**
-     * ================= 4. 初始化示范数据集 (数据更新至 2026-10-07) =================
+     * ================= 4. 初始化示范数据集 =================
      */
     function initDefaultData() {
       appState.baseInfo = [
@@ -979,7 +1099,7 @@
           appState.sales.push({ "货号": sku, "日期": `${ym}-15`, "销量": mQty, "销售额": mQty * 299 });
         });
 
-        // 2025-10 的同期天数对齐划分(10.1~10.7)
+        // 2025-10 的同期天数对齐划分
         const factor10 = seasonalFactors[9];
         const base25_10 = Math.round(baseQty * factor10 * 1.08);
         const qty25_01to07 = Math.round(base25_10 * 0.26);
@@ -1267,7 +1387,6 @@
       }
     }
 
-    // 各月全局预计增长率设置（推导各月预计发货量），一定要包含10月
     function buildMonthlyGrowthBar() {
       const bar = document.getElementById("monthlyGrowthControlBar");
       bar.innerHTML = `
@@ -1345,7 +1464,6 @@
       updateModel();
     }
 
-    // 滚动预期期数切换，必须把当前所在月（10月）计算进去
     function onForecastSpanChange(spanCount) {
       const count = parseInt(spanCount, 10);
       const allPossibleMonths = ['2026-10', '2026-11', '2026-12', '2027-01', '2027-02', '2027-03'];
@@ -1381,7 +1499,6 @@
 
     /**
      * ================= 6. 核心多表关联计算与渲染引擎 =================
-     * 去除含余期补发；当前所在月(10月)预计发货量扣减当月实际已发
      */
     function updateModel() {
       const dim = appState.currentDimension;
@@ -1439,10 +1556,7 @@
       appState.currentDimItems = dimItems;
 
       buildFastAggIndex(dimItems, skuToItemKey);
-      const fastIdx = appState.fastAggIndex;
-
-      const dateEl = document.getElementById('dataUpdateLatestDate');
-      if (dateEl) dateEl.textContent = fastIdx.latestSalesDate;
+      updateDynamicSalesDateLabels();
 
       const stockAgg = {};
       dimItems.forEach(item => { stockAgg[item.key] = { warehouse: 0, inTransit: 0, total: 0 }; });
@@ -1574,7 +1688,6 @@
             ? Math.round(samePeriodSales * (1 + growthRate))
             : Math.round(stk.total * 0.15 * (1 + growthRate));
 
-          // 核心更新：当前所在月(10月)，自动把当月实际已发扣减
           let monthForecastShipment = baseShipment;
           let actualSoldMTD = 0;
           let isCurrentMonth = (m === appState.currentMonthYM);
@@ -1933,7 +2046,7 @@
           : '';
 
         const currentMonthDeductHint = isCurrentMonth
-          ? `<div class="text-[10px] text-amber-700 font-normal">已减10.1~10.7已发: ${item.actualSoldInMonth.toLocaleString()} 件</div>`
+          ? `<div class="text-[10px] text-amber-700 font-normal">已减${getCurrentMonthSalesDateInfo().rangeLabel}已发: ${item.actualSoldInMonth.toLocaleString()} 件</div>`
           : '';
 
         tbodyHtml += `
@@ -2167,10 +2280,15 @@
       }
 
       const slicersText = getActiveSlicersSummaryText();
+      const dateInfo = getCurrentMonthSalesDateInfo();
+      const currentYear = dateInfo.year;
+      const previousYear = currentYear - 1;
+      const currentMonthNumber = dateInfo.month;
+      const cutoffDay = dateInfo.hasDate ? dateInfo.day : 0;
       document.getElementById('modalFieldTitle').textContent = `【${dimName}】销售历史与天数对齐同比分析`;
       document.getElementById('modalFieldSubtitle').innerHTML = `
         <div class="flex flex-wrap items-center gap-2 mt-0.5">
-          <span class="text-slate-500">展示 2025 全年、2026 年累计销量及同期对齐同比增速 YoY%</span>
+          <span class="text-slate-500">展示 ${previousYear} 全年、${currentYear} 年累计销量及同期对齐同比增速 YoY%</span>
           <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-sky-100 text-sky-800 border border-sky-200">
             <svg class="w-3 h-3 mr-1 text-sky-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
@@ -2182,52 +2300,65 @@
 
       document.getElementById('modalMonthCategoryBreakdownSection').classList.add('hidden');
 
-      let sales2025Full = 0;
+      let salesPreviousYearFull = 0;
       for (let i = 1; i <= 12; i++) {
-        const mStr = `2025-${i < 10 ? '0' + i : i}`;
-        sales2025Full += getAggSales(dimKey, mStr, null);
+        const mStr = `${previousYear}-${String(i).padStart(2, '0')}`;
+        salesPreviousYearFull += getAggSales(dimKey, mStr, null);
       }
 
-      let sales2026Cum = 0;
-      let sales2025Cum = 0;
+      let salesCurrentYearCum = 0;
+      let salesPreviousYearCum = 0;
 
-      // 截至 10月7日
-      for (let m = 1; m <= 9; m++) {
-        const mStr26 = `2026-${m < 10 ? '0' + m : m}`;
-        const mStr25 = `2025-${m < 10 ? '0' + m : m}`;
-        sales2026Cum += getAggSales(dimKey, mStr26, null);
-        sales2025Cum += getAggSales(dimKey, mStr25, null);
+      for (let m = 1; m < currentMonthNumber; m++) {
+        const mStrCurrent = `${currentYear}-${String(m).padStart(2, '0')}`;
+        const mStrPrevious = `${previousYear}-${String(m).padStart(2, '0')}`;
+        salesCurrentYearCum += getAggSales(dimKey, mStrCurrent, null);
+        salesPreviousYearCum += getAggSales(dimKey, mStrPrevious, null);
       }
-
-      // 10月对齐前7天
-      sales2026Cum += getAggSales(dimKey, '2026-10', 7);
-      sales2025Cum += getAggSales(dimKey, '2025-10', 7);
+      if (cutoffDay > 0) {
+        const currentMonthYM = `${currentYear}-${String(currentMonthNumber).padStart(2, '0')}`;
+        const previousMonthYM = `${previousYear}-${String(currentMonthNumber).padStart(2, '0')}`;
+        salesCurrentYearCum += getAggSales(dimKey, currentMonthYM, cutoffDay);
+        salesPreviousYearCum += getAggSales(dimKey, previousMonthYM, cutoffDay);
+      }
 
       let cumYoYRate = 0;
       let cumYoYText = '0.0%';
-      if (sales2025Cum > 0) {
-        cumYoYRate = ((sales2026Cum - sales2025Cum) / sales2025Cum) * 100;
+      if (salesPreviousYearCum > 0) {
+        cumYoYRate = ((salesCurrentYearCum - salesPreviousYearCum) / salesPreviousYearCum) * 100;
         cumYoYText = (cumYoYRate >= 0 ? '+' : '') + cumYoYRate.toFixed(1) + '%';
       }
 
-      document.getElementById('modalMetric2025Full').textContent = `${sales2025Full.toLocaleString()} 件`;
-      document.getElementById('modalMetric2026Cum').textContent = `${sales2026Cum.toLocaleString()} 件`;
-      document.getElementById('modalMetric2025Cum').textContent = `${sales2025Cum.toLocaleString()} 件`;
+      document.getElementById('modalMetric2025Full').textContent = `${salesPreviousYearFull.toLocaleString()} 件`;
+      document.getElementById('modalMetric2026Cum').textContent = `${salesCurrentYearCum.toLocaleString()} 件`;
+      document.getElementById('modalMetric2025Cum').textContent = `${salesPreviousYearCum.toLocaleString()} 件`;
 
-      document.getElementById('modalMetric2026CumSub').textContent = `2026.01.01 ~ 10.07`;
-      document.getElementById('modalMetric2025CumSub').textContent = `2025.01.01 ~ 10.07 (对齐)`;
+      const currentPeriodLabel = cutoffDay
+        ? `${currentYear}.01.01 ~ ${currentYear}.${String(currentMonthNumber).padStart(2, '0')}.${String(cutoffDay).padStart(2, '0')}`
+        : `${currentYear}.01.01 ~ ${currentYear}.${String(currentMonthNumber).padStart(2, '0')}（当月暂无实销日期）`;
+      const previousPeriodLabel = cutoffDay
+        ? `${previousYear}.01.01 ~ ${previousYear}.${String(currentMonthNumber).padStart(2, '0')}.${String(cutoffDay).padStart(2, '0')} (对齐)`
+        : `${previousYear}.01.01 ~ ${previousYear}.${String(currentMonthNumber).padStart(2, '0')}（未纳入当月同期）`;
+      document.getElementById('modalMetric2026CumSub').textContent = currentPeriodLabel;
+      document.getElementById('modalMetric2025CumSub').textContent = previousPeriodLabel;
+      const previousFullLabel = document.getElementById('modalMetric2025FullLabel');
+      const currentCumLabel = document.getElementById('modalMetric2026CumLabel');
+      const previousCumLabel = document.getElementById('modalMetric2025CumLabel');
+      const previousFullPeriod = document.getElementById('modalMetric2025FullPeriod');
+      if (previousFullLabel) previousFullLabel.textContent = `${previousYear} 全年总销量`;
+      if (currentCumLabel) currentCumLabel.textContent = `${currentYear} 年累计销量`;
+      if (previousCumLabel) previousCumLabel.textContent = `${previousYear} 同期累计销量`;
+      if (previousFullPeriod) previousFullPeriod.textContent = `${previousYear}.01 ~ ${previousYear}.12`;
 
       const cumYoYEl = document.getElementById('modalMetricCumYoY');
       cumYoYEl.textContent = cumYoYText;
       cumYoYEl.className = `text-base sm:text-lg font-black mt-0.5 ${cumYoYRate >= 0 ? 'text-emerald-700' : 'text-rose-700'}`;
 
-      const past14Months = [
-        "2025-09", "2025-10",
-        "2025-11", "2025-12",
-        "2026-01", "2026-02", "2026-03",
-        "2026-04", "2026-05", "2026-06",
-        "2026-07", "2026-08", "2026-09", "2026-10"
-      ];
+      const past14Months = [];
+      for (let offset = 13; offset >= 0; offset--) {
+        const monthDate = new Date(currentYear, currentMonthNumber - 1 - offset, 1);
+        past14Months.push(`${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`);
+      }
 
       const chartLabels = [];
       const currentData = [];
@@ -2237,15 +2368,16 @@
       let tableHtml = '';
 
       past14Months.forEach(m => {
-        const isCurrentMonth = (m === appState.currentMonthYM || m === '2026-10');
+        const isCurrentMonth = (m === appState.currentMonthYM);
         let curSales = 0;
         let priorSalesAligned = 0;
         let priorSalesFull = 0;
 
         if (isCurrentMonth) {
-          curSales = getAggSales(dimKey, m, 7);
-          priorSalesAligned = getAggSales(dimKey, '2025-10', 7);
-          priorSalesFull = getAggSales(dimKey, '2025-10', null);
+          curSales = cutoffDay > 0 ? getAggSales(dimKey, m, cutoffDay) : 0;
+          const priorCurrentMonth = getSamePeriodLastYear(m);
+          priorSalesAligned = cutoffDay > 0 ? getAggSales(dimKey, priorCurrentMonth, cutoffDay) : 0;
+          priorSalesFull = getAggSales(dimKey, priorCurrentMonth, null);
         } else {
           curSales = getAggSales(dimKey, m, null);
           const pMonth = getSamePeriodLastYear(m);
@@ -2274,7 +2406,7 @@
           badgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">同比持平</span>`;
         }
 
-        chartLabels.push(isCurrentMonth ? `${m}(至07日)` : m);
+        chartLabels.push(isCurrentMonth ? (cutoffDay > 0 ? `${m}(至${cutoffDay}日)` : `${m}(暂无当月数据)`) : m);
         currentData.push(curSales);
         priorData.push(priorSalesAligned);
         growthRates.push(Number(rate.toFixed(1)));
@@ -2282,7 +2414,7 @@
         tableHtml += `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="py-2 px-3 font-semibold font-mono text-slate-800">
-              ${m} ${isCurrentMonth ? `<span class="text-[10px] text-amber-800 bg-amber-100 px-1 py-0.2 rounded font-bold select-none">至10.07日</span>` : ''}
+              ${m} ${isCurrentMonth && cutoffDay > 0 ? `<span class="text-[10px] text-amber-800 bg-amber-100 px-1 py-0.2 rounded font-bold select-none">至${currentMonthNumber}.${String(cutoffDay).padStart(2, '0')}日</span>` : (isCurrentMonth ? `<span class="text-[10px] text-slate-500 bg-slate-100 px-1 py-0.2 rounded font-bold select-none">暂无当月数据</span>` : '')}
             </td>
             <td class="py-2 px-3 text-right font-mono font-bold text-slate-900">${curSales.toLocaleString()}</td>
             <td class="py-2 px-3 text-right font-mono text-slate-600">
@@ -2320,8 +2452,9 @@
 
       breakdownSection.classList.remove('hidden');
       const isCurrentMonth = (monthStr === appState.currentMonthYM);
-      breakdownTitle.textContent = isCurrentMonth 
-        ? `【${monthStr}】当前所在月：各品类销售历史与发货预测明细表 (已扣减当月实际已发)` 
+      const dateInfo = getCurrentMonthSalesDateInfo();
+      breakdownTitle.textContent = isCurrentMonth
+        ? `【${monthStr}】当前所在月：各品类销售历史与发货预测明细表（已扣减截至${dateInfo.hasDate ? `${dateInfo.month}.${dateInfo.day}日` : '销售数据最新日期'}的当月实际已发）`
         : `【${monthStr}】各品类销售历史与发货预测明细表`;
 
       const samePeriodMonth = getSamePeriodLastYear(monthStr);
@@ -2959,7 +3092,7 @@
       document.getElementById('excelFileInput').addEventListener('change', handleExcelUpload);
     }
 
-    // 关键功能：直接将当前完整系统代码下载为可离线运行的.html文件
+    // 直接将当前完整系统代码下载为可离线运行的.html文件
     function downloadCurrentHtmlFile() {
       try {
         const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
