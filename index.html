@@ -824,6 +824,18 @@
       return `${y}-${parts[1]}`;
     }
 
+    function getPreviousMonthYM(ymStr) {
+      const parts = ymStr.split('-');
+      let y = parseInt(parts[0], 10);
+      let m = parseInt(parts[1], 10);
+      m -= 1;
+      if (m === 0) {
+        m = 12;
+        y -= 1;
+      }
+      return `${y}-${String(m).padStart(2, '0')}`;
+    }
+
     // 当前月截止日期始终从已导入的销售数据中取得，不使用固定日期
     function getCurrentMonthSalesDateInfo() {
       const currentYM = appState.currentMonthYM || '';
@@ -1621,13 +1633,39 @@
         }
       }
 
-      // 近期同期增幅参考
+      // 近期同期增幅参考（上个月与本月，本月实际增幅用括号）
+      const prevYM = getPreviousMonthYM(appState.currentMonthYM);
+      const prevSamePeriodYM = getSamePeriodLastYear(prevYM);
+      const curYM = appState.currentMonthYM;
+      const curSamePeriodYM = getSamePeriodLastYear(curYM);
+      const dateInfo = getCurrentMonthSalesDateInfo();
+      const cutoffDay = dateInfo.hasDate ? dateInfo.day : null;
+
       const actualGrowthRefMap = {};
       dimItems.forEach(item => {
         const k = item.key;
-        const s2026_09 = getAggSales(k, '2026-09', null);
-        const s2025_09 = getAggSales(k, '2025-09', null);
-        actualGrowthRefMap[k] = s2025_09 > 0 ? (s2026_09 - s2025_09) / s2025_09 : 0.12;
+        const s_prev = getAggSales(k, prevYM, null);
+        const s_prev_sp = getAggSales(k, prevSamePeriodYM, null);
+        const s_cur = getAggSales(k, curYM, cutoffDay);
+        const s_cur_sp = getAggSales(k, curSamePeriodYM, cutoffDay);
+
+        let prevText = '-';
+        if (s_prev_sp > 0) {
+          const r = (s_prev - s_prev_sp) / s_prev_sp;
+          prevText = (r >= 0 ? '+' : '') + (r * 100).toFixed(1) + '%';
+        } else if (s_prev > 0) {
+          prevText = '+100.0%';
+        }
+
+        let curText = '-';
+        if (s_cur_sp > 0) {
+          const r = (s_cur - s_cur_sp) / s_cur_sp;
+          curText = (r >= 0 ? '+' : '') + (r * 100).toFixed(1) + '%';
+        } else if (s_cur > 0) {
+          curText = '+100.0%';
+        }
+
+        actualGrowthRefMap[k] = `${prevText} (${curText})`;
       });
 
       renderDynamicTableHeader(dim, isCategoryDim);
@@ -1712,7 +1750,7 @@
           monthlyStats[m].forecastShipment += monthForecastShipment;
 
           const ratePctVal = Math.round(growthRate * 100);
-          const refRateText = (refGrowthRate >= 0 ? '+' : '') + (refGrowthRate * 100).toFixed(1) + '%';
+          const refRateText = typeof refGrowthRate === 'string' ? refGrowthRate : '- (-)';
 
           const currentMonthHint = isCurrentMonth 
             ? `<div class="text-[9px] text-amber-700 font-normal leading-tight">全月:${baseShipment.toLocaleString()} - 已发:${actualSoldMTD.toLocaleString()}</div>`
@@ -1722,7 +1760,7 @@
             <td class="py-2.5 px-2 text-right font-mono text-slate-500 bg-slate-50/60 border-l border-slate-200" data-val="${samePeriodSales}">
               ${samePeriodSales.toLocaleString()}
             </td>
-            <td class="py-2.5 px-2 text-center font-mono text-slate-400 text-[11px]">${refRateText}</td>
+            <td class="py-2.5 px-2 text-center font-mono text-slate-500 text-[11px] whitespace-nowrap">${refRateText}</td>
             <td class="py-1.5 px-2 text-center bg-sky-50/20 select-none">
               <input type="number" 
                      value="${ratePctVal}" 
@@ -1922,15 +1960,35 @@
             `;
           });
 
-          // 计算该二级类目下的近期同期参考实际增幅 (2026-09 vs 2025-09)
-          let subS2026_09 = 0;
-          let subS2025_09 = 0;
+          // 计算该二级类目下的近期同期参考实际增幅 (上个月与本月，本月实际增幅用括号)
+          let sub_s_prev = 0;
+          let sub_s_prev_sp = 0;
+          let sub_s_cur = 0;
+          let sub_s_cur_sp = 0;
           groupItems.forEach(item => {
-            subS2026_09 += getAggSales(item.key, '2026-09', null);
-            subS2025_09 += getAggSales(item.key, '2025-09', null);
+            sub_s_prev += getAggSales(item.key, prevYM, null);
+            sub_s_prev_sp += getAggSales(item.key, prevSamePeriodYM, null);
+            sub_s_cur += getAggSales(item.key, curYM, cutoffDay);
+            sub_s_cur_sp += getAggSales(item.key, curSamePeriodYM, cutoffDay);
           });
-          const subRefGrowth = subS2025_09 > 0 ? (subS2026_09 - subS2025_09) / subS2025_09 : 0.12;
-          const subRefGrowthText = (subRefGrowth >= 0 ? '+' : '') + (subRefGrowth * 100).toFixed(1) + '%';
+
+          let subPrevText = '-';
+          if (sub_s_prev_sp > 0) {
+            const r = (sub_s_prev - sub_s_prev_sp) / sub_s_prev_sp;
+            subPrevText = (r >= 0 ? '+' : '') + (r * 100).toFixed(1) + '%';
+          } else if (sub_s_prev > 0) {
+            subPrevText = '+100.0%';
+          }
+
+          let subCurText = '-';
+          if (sub_s_cur_sp > 0) {
+            const r = (sub_s_cur - sub_s_cur_sp) / sub_s_cur_sp;
+            subCurText = (r >= 0 ? '+' : '') + (r * 100).toFixed(1) + '%';
+          } else if (sub_s_cur > 0) {
+            subCurText = '+100.0%';
+          }
+
+          const subRefGrowthText = `${subPrevText} (${subCurText})`;
 
           // 核心更新1：逐月生成小计汇总的 4 项完整分解列
           let subMonthCellsHtml = '';
@@ -1958,7 +2016,7 @@
               <td class="py-2.5 px-2 text-right font-mono font-bold text-slate-700 bg-sky-100/50 border-l border-slate-200" data-val="${spSales}">
                 ${spSales.toLocaleString()}
               </td>
-              <td class="py-2.5 px-2 text-center font-mono text-slate-500 text-[11px] bg-sky-100/30">${subRefGrowthText}</td>
+              <td class="py-2.5 px-2 text-center font-mono font-semibold text-slate-600 text-[11px] bg-sky-100/30 whitespace-nowrap">${subRefGrowthText}</td>
               <td class="py-2.5 px-2 text-center font-mono font-bold text-sky-800 bg-sky-100/60 text-xs">
                 ${subGrowthText}
               </td>
@@ -2282,8 +2340,8 @@
           <th class="py-2.5 px-2 font-bold text-right text-slate-600 bg-slate-100 border-l border-slate-200 min-w-[85px]">
             ${m.slice(5)}月 同期<br><span class="text-[10px] text-slate-400 font-normal">(${samePeriodMonth})</span>
           </th>
-          <th class="py-2.5 px-2 font-bold text-center text-slate-500 bg-slate-100 min-w-[75px]" title="以近期实际销量对比去年同期的增长幅度">
-            参考实际增幅<br><span class="text-[10px] text-slate-400 font-normal">(近期YoY)</span>
+          <th class="py-2.5 px-2 font-bold text-center text-slate-500 bg-slate-100 min-w-[95px]" title="以近期实际销量对比去年同期的增长幅度：上月实际增幅 (本月天数对齐实际增幅)">
+            参考实际增幅<br><span class="text-[10px] text-slate-400 font-normal">上月(本月)</span>
           </th>
           <th class="py-2.5 px-2 font-bold text-center text-sky-800 bg-sky-100/60 min-w-[95px]">
             预计增长率%<br><span class="text-[10px] text-sky-600 font-normal">✎可自填</span>
@@ -2356,11 +2414,36 @@
       const totalTotSellDenom = sumTotalStock + sumPeriodSales;
       const totalTotSellText = totalTotSellDenom > 0 ? ((sumPeriodSales / totalTotSellDenom) * 100).toFixed(1) + '%' : '-';
 
-      // 全盘同期参考实际增幅 (2026-09 vs 2025-09)
-      const tot_s2026_09 = getAggSales('ALL', '2026-09', null);
-      const tot_s2025_09 = getAggSales('ALL', '2025-09', null);
-      const totRefGrowth = tot_s2025_09 > 0 ? (tot_s2026_09 - tot_s2025_09) / tot_s2025_09 : 0.12;
-      const totRefGrowthText = (totRefGrowth >= 0 ? '+' : '') + (totRefGrowth * 100).toFixed(1) + '%';
+      // 全盘同期参考实际增幅 (上个月与本月，本月实际增幅用括号)
+      const prevYM = getPreviousMonthYM(appState.currentMonthYM);
+      const prevSamePeriodYM = getSamePeriodLastYear(prevYM);
+      const curYM = appState.currentMonthYM;
+      const curSamePeriodYM = getSamePeriodLastYear(curYM);
+      const dateInfo = getCurrentMonthSalesDateInfo();
+      const cutoffDay = dateInfo.hasDate ? dateInfo.day : null;
+
+      const tot_s_prev = getAggSales('ALL', prevYM, null);
+      const tot_s_prev_sp = getAggSales('ALL', prevSamePeriodYM, null);
+      const tot_s_cur = getAggSales('ALL', curYM, cutoffDay);
+      const tot_s_cur_sp = getAggSales('ALL', curSamePeriodYM, cutoffDay);
+
+      let totPrevText = '-';
+      if (tot_s_prev_sp > 0) {
+        const r = (tot_s_prev - tot_s_prev_sp) / tot_s_prev_sp;
+        totPrevText = (r >= 0 ? '+' : '') + (r * 100).toFixed(1) + '%';
+      } else if (tot_s_prev > 0) {
+        totPrevText = '+100.0%';
+      }
+
+      let totCurText = '-';
+      if (tot_s_cur_sp > 0) {
+        const r = (tot_s_cur - tot_s_cur_sp) / tot_s_cur_sp;
+        totCurText = (r >= 0 ? '+' : '') + (r * 100).toFixed(1) + '%';
+      } else if (tot_s_cur > 0) {
+        totCurText = '+100.0%';
+      }
+
+      const totRefGrowthText = `${totPrevText} (${totCurText})`;
 
       let footMonthCellsHtml = '';
       appState.forecastMonths.forEach(m => {
@@ -2387,7 +2470,7 @@
           <td class="py-3 px-2 text-right font-mono font-bold text-slate-800 bg-slate-200/60 border-l border-slate-200" data-val="${spSales}">
             ${spSales.toLocaleString()}
           </td>
-          <td class="py-3 px-2 text-center font-mono text-slate-500 text-[11px] bg-slate-200/40">${totRefGrowthText}</td>
+          <td class="py-3 px-2 text-center font-mono font-bold text-slate-600 text-[11px] bg-slate-200/40 whitespace-nowrap">${totRefGrowthText}</td>
           <td class="py-3 px-2 text-center font-mono font-bold text-sky-800 bg-sky-100/70 text-xs">
             ${growthText}
           </td>
