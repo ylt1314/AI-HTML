@@ -247,7 +247,9 @@
             <div class="font-semibold text-sky-200">鞋服季节性预测算法 & 发货/库存平衡模型逻辑：</div>
             <div class="text-slate-300 flex flex-wrap gap-x-4 gap-y-1">
               <span>• <strong class="text-sky-300 font-mono">当月预计发货量</strong> = 去年同期销量 × (1 + 自填增长率) <span id="currentMonthFormulaHint" class="text-amber-300 font-bold">【注：当月扣减日期随销售数据自动更新】</span></span>
-              <span>• <strong class="text-emerald-300 font-mono">较同期净增减</strong> = 当月预计发货量 − 去年同期实际销量</span>
+              <span>• <strong class="text-emerald-300 font-mono">较同期净增减</strong> = 当月预计发货量(当前月含已发) − 去年同期实际销量</span>
+              <span>• <strong class="text-cyan-300 font-mono">预计发货量(含已发)</strong> = 预计发货量总计 + 当月已发</span>
+              <span>• <strong class="text-cyan-200 font-mono">预计发货量同比</strong> = 预计发货量(含已发) ÷ 同期数据总计 − 1</span>
               <span>• <strong class="text-indigo-300 font-mono">预估实际发货量</strong> = 预计发货量总计 × (1 - 退货率)</span>
               <span>• <strong class="text-teal-300 font-mono">在仓售罄率</strong> = 期间销量 ÷ (在仓库存 + 期间销量)</span>
               <span>• <strong class="text-teal-200 font-mono">总售罄率</strong> = 期间销量 ÷ (总库存 + 期间销量) [春夏取3-8月，秋冬取9-次年2月]</span>
@@ -436,7 +438,7 @@
               <span class="w-2.5 h-2.5 rounded bg-sky-600 inline-block mr-2"></span>
               按月统计分析表 (月度发货分解与同期对比)
             </h4>
-            <p id="monthlyAnalysisDescription" class="text-[11px] text-slate-400 mt-0.5">较同期净增减 = 当月预计发货量 − 去年同期实际销量；当前月预计发货量已按销售数据中的最新日期扣减当月实际已发；单击月份可调取历史明细</p>
+            <p id="monthlyAnalysisDescription" class="text-[11px] text-slate-400 mt-0.5">较同期净增减 = 当月预计发货量 − 去年同期实际销量（当月为：(当月预计发货+当月已发) − 去年同期实销）；单击月份可调取历史明细</p>
           </div>
           <div class="flex items-center space-x-2 text-xs select-text">
             <span class="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-medium shadow-xs">
@@ -552,7 +554,7 @@
           <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block mr-1"></span> 绿色：供需与目标平衡</span>
         </div>
         <div class="text-slate-500 font-mono">
-          计算公式：预计发货量 = 去年同期 × (1+预计增长率) (10月扣减已发) | 实际发货 = 预计发货 × (1-退货率) | 溢出差额 = 目标库存 - (总库存 - 预估实际发货)
+          计算公式：预计发货量(含已发) = 预计发货量总计 + 当月已发 | 预计发货量同比 = 预计发货量(含已发)/同期数据总计 - 1 | 实际发货 = 预计发货 × (1-退货率) | 溢出差额 = 目标库存 - (总库存 - 预估实际发货)
         </div>
       </div>
     </section>
@@ -668,7 +670,7 @@
 
       <!-- Modal Footer -->
       <div class="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-        <span>较同期净增减 = 当月预计发货量 − 去年同期实际销量 (支持鼠标框选复制文本)</span>
+        <span>较同期净增减 = 当月预计发货量 − 去年同期实际销量 (当前月为: (预计发货量+当月已发) − 去年同期销量) (支持鼠标框选复制文本)</span>
         <button id="btnModalCloseSecondary" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition select-none">关闭</button>
       </div>
     </div>
@@ -882,8 +884,8 @@
       const monthlyNote = document.getElementById('monthlyAnalysisDescription');
       if (monthlyNote) {
         monthlyNote.textContent = info.hasDate
-          ? `较同期净增减 = 当月预计发货量 − 去年同期实际销量；${info.monthLabel}预计发货量已扣减销售数据中截至${info.dateLabel}日的当月实际已发；单击月份可调取历史明细`
-          : `较同期净增减 = 当月预计发货量 − 去年同期实际销量；当前月已发扣减日期由销售数据自动识别；单击月份可调取历史明细`;
+          ? `较同期净增减 = 当月预计发货量 − 去年同期实际销量（${info.monthLabel}当前月为：(${info.monthLabel}预计发货+截至${info.dateLabel}日已发) − 去年同期销量）；单击月份可调取历史明细`
+          : `较同期净增减 = 当月预计发货量 − 去年同期实际销量（当前月包含已发数量）；单击月份可调取历史明细`;
       }
 
       const modalBreakdownDateHint = document.getElementById('modalBreakdownDateHint');
@@ -1648,6 +1650,8 @@
       });
 
       let sumForecastSales = 0;
+      let sumSamePeriodSales = 0;
+      let sumActualSoldMTD = 0;
       let sumActualShipments = 0;
       let sumWarehouse = 0;
       let sumInTransit = 0;
@@ -1674,11 +1678,14 @@
         }
 
         let rowForecastTotal = 0;
+        let rowSamePeriodTotal = 0;
+        let rowActualSoldMTD = getCurrentMonthActualSold(dimKey);
         let monthCellsHtml = '';
 
         appState.forecastMonths.forEach(m => {
           const samePeriodMonth = getSamePeriodLastYear(m);
           const samePeriodSales = getAggSales(dimKey, samePeriodMonth, null);
+          rowSamePeriodTotal += samePeriodSales;
 
           let growthRate = (userCfg.monthlyRates && userCfg.monthlyRates[m] !== undefined)
             ? userCfg.monthlyRates[m]
@@ -1693,7 +1700,7 @@
           let isCurrentMonth = (m === appState.currentMonthYM);
 
           if (isCurrentMonth) {
-            actualSoldMTD = getCurrentMonthActualSold(dimKey);
+            actualSoldMTD = rowActualSoldMTD;
             monthForecastShipment = Math.max(0, baseShipment - actualSoldMTD);
             monthlyStats[m].actualSoldInMonth += actualSoldMTD;
           }
@@ -1732,6 +1739,14 @@
           `;
         });
 
+        const rowForecastTotalWithShipped = rowForecastTotal + rowActualSoldMTD;
+        let rowForecastYoY = null;
+        let rowForecastYoYText = '-';
+        if (rowSamePeriodTotal > 0) {
+          rowForecastYoY = (rowForecastTotalWithShipped - rowSamePeriodTotal) / rowSamePeriodTotal;
+          rowForecastYoYText = (rowForecastYoY >= 0 ? '+' : '') + (rowForecastYoY * 100).toFixed(1) + '%';
+        }
+
         const actualShipment = Math.round(rowForecastTotal * (1 - appState.returnRate));
         const estimatedEndingStock = stk.total - actualShipment;
         const overflowDiff = targetStock - estimatedEndingStock;
@@ -1744,6 +1759,8 @@
         const totSellThroughText = totSellDenom > 0 ? ((pSales / totSellDenom) * 100).toFixed(1) + '%' : '-';
 
         sumForecastSales += rowForecastTotal;
+        sumSamePeriodSales += rowSamePeriodTotal;
+        sumActualSoldMTD += rowActualSoldMTD;
         sumActualShipments += actualShipment;
         sumWarehouse += stk.warehouse;
         sumInTransit += stk.inTransit;
@@ -1779,6 +1796,11 @@
 
         return {
           rowForecastTotal,
+          rowSamePeriodTotal,
+          rowActualSoldMTD,
+          rowForecastTotalWithShipped,
+          rowForecastYoY,
+          rowForecastYoYText,
           actualShipment,
           estimatedEndingStock,
           overflowDiff,
@@ -1802,6 +1824,8 @@
           const groupItems = subCatGroups[subCatName];
 
           let subForecastTotal = 0;
+          let subSamePeriodTotal = 0;
+          let subActualSoldMTD = 0;
           let subActualShipment = 0;
           let subWarehouse = 0;
           let subInTransit = 0;
@@ -1819,6 +1843,8 @@
             const calc = renderRowCells(item, stk, refGrowthRate, userCfg);
 
             subForecastTotal += calc.rowForecastTotal;
+            subSamePeriodTotal += calc.rowSamePeriodTotal;
+            subActualSoldMTD += calc.rowActualSoldMTD;
             subActualShipment += calc.actualShipment;
             subWarehouse += stk.warehouse;
             subInTransit += stk.inTransit;
@@ -1841,6 +1867,11 @@
                 </td>
                 ${calc.monthCellsHtml}
                 <td class="py-2.5 px-2 text-right font-black text-sky-950 bg-sky-100/50 font-mono">${calc.rowForecastTotal.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-right font-medium text-slate-600 bg-slate-50/60 font-mono">${calc.rowSamePeriodTotal.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-right font-black text-sky-900 bg-sky-100/60 font-mono" title="含当月已发: ${calc.rowActualSoldMTD.toLocaleString()} 件">${calc.rowForecastTotalWithShipped.toLocaleString()}</td>
+                <td class="py-2.5 px-2 text-center font-bold font-mono ${calc.rowForecastYoY !== null && calc.rowForecastYoY >= 0 ? 'text-emerald-700 bg-emerald-50/40' : (calc.rowForecastYoY !== null ? 'text-rose-600 bg-rose-50/40' : 'text-slate-400')}">
+                  ${calc.rowForecastYoYText}
+                </td>
                 <td class="py-2.5 px-2 text-right font-bold text-indigo-700 bg-indigo-50/40 font-mono">${calc.actualShipment.toLocaleString()}</td>
                 <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${stk.warehouse.toLocaleString()}</td>
                 <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${stk.inTransit.toLocaleString()}</td>
@@ -1867,6 +1898,10 @@
               </tr>
             `;
           });
+
+          const subForecastTotalWithShipped = subForecastTotal + subActualSoldMTD;
+          const subForecastYoY = subSamePeriodTotal > 0 ? (subForecastTotalWithShipped - subSamePeriodTotal) / subSamePeriodTotal : null;
+          const subForecastYoYText = subForecastYoY !== null ? ((subForecastYoY >= 0 ? '+' : '') + (subForecastYoY * 100).toFixed(1) + '%') : '-';
 
           const subEndingStock = subTotalStock - subActualShipment;
           const subOverflowDiff = subTargetStock - subEndingStock;
@@ -1897,6 +1932,11 @@
                 滚动各月预测发货分解 (10月已扣减当月实际已发)
               </td>
               <td class="py-2 px-2 text-right font-black text-sky-950 bg-sky-200/40 font-mono">${subForecastTotal.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right font-bold text-slate-700 bg-slate-100/70 font-mono">${subSamePeriodTotal.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right font-black text-sky-900 bg-sky-200/50 font-mono" title="小计含已发: ${subActualSoldMTD.toLocaleString()} 件">${subForecastTotalWithShipped.toLocaleString()}</td>
+              <td class="py-2 px-2 text-center font-bold font-mono ${subForecastYoY !== null && subForecastYoY >= 0 ? 'text-emerald-700 bg-emerald-100/50' : (subForecastYoY !== null ? 'text-rose-600 bg-rose-100/50' : 'text-slate-400')}">
+                ${subForecastYoYText}
+              </td>
               <td class="py-2 px-2 text-right font-bold text-indigo-800 bg-indigo-100/40 font-mono">${subActualShipment.toLocaleString()}</td>
               <td class="py-2 px-2 text-right text-slate-800 font-mono">${subWarehouse.toLocaleString()}</td>
               <td class="py-2 px-2 text-right text-slate-800 font-mono">${subInTransit.toLocaleString()}</td>
@@ -1935,6 +1975,11 @@
               </td>
               ${calc.monthCellsHtml}
               <td class="py-2.5 px-2 text-right font-black text-sky-950 bg-sky-100/50 font-mono">${calc.rowForecastTotal.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-right font-medium text-slate-600 bg-slate-50/60 font-mono">${calc.rowSamePeriodTotal.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-right font-black text-sky-900 bg-sky-100/60 font-mono" title="含当月已发: ${calc.rowActualSoldMTD.toLocaleString()} 件">${calc.rowForecastTotalWithShipped.toLocaleString()}</td>
+              <td class="py-2.5 px-2 text-center font-bold font-mono ${calc.rowForecastYoY !== null && calc.rowForecastYoY >= 0 ? 'text-emerald-700 bg-emerald-50/40' : (calc.rowForecastYoY !== null ? 'text-rose-600 bg-rose-50/40' : 'text-slate-400')}">
+                ${calc.rowForecastYoYText}
+              </td>
               <td class="py-2.5 px-2 text-right font-bold text-indigo-700 bg-indigo-50/40 font-mono">${calc.actualShipment.toLocaleString()}</td>
               <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${stk.warehouse.toLocaleString()}</td>
               <td class="py-2.5 px-2 text-right text-slate-700 font-mono">${stk.inTransit.toLocaleString()}</td>
@@ -1965,7 +2010,7 @@
 
       document.getElementById('tableBody').innerHTML = rowsHtml;
 
-      renderTableFooter(dimItems.length, sumForecastSales, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, sumPeriodSales);
+      renderTableFooter(dimItems.length, sumForecastSales, sumSamePeriodSales, sumActualSoldMTD, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, sumPeriodSales);
       renderMonthlyAnalysisTable(monthlyStats, sumForecastSales);
 
       document.getElementById('kpiForecastSales').textContent = sumForecastSales.toLocaleString();
@@ -2015,6 +2060,7 @@
       let totForecastShipment = 0;
       let totActualShipment = 0;
       let totReturnQty = 0;
+      let totDiffVsPrior = 0;
 
       let weightedGrowthSum = 0;
       let totalPriorSalesForWeight = 0;
@@ -2033,20 +2079,23 @@
 
         const actShipment = Math.round(fcShipment * (1 - appState.returnRate));
         const retQty = fcShipment - actShipment;
-        const diffVsPrior = fcShipment - spSales;
+
+        const isCurrentMonth = (m === appState.currentMonthYM);
+        const fullMonthExpected = isCurrentMonth ? (fcShipment + item.actualSoldInMonth) : fcShipment;
+        const diffVsPrior = fullMonthExpected - spSales;
 
         totPriorSales += spSales;
         totForecastShipment += fcShipment;
         totActualShipment += actShipment;
         totReturnQty += retQty;
+        totDiffVsPrior += diffVsPrior;
 
-        const isCurrentMonth = (m === appState.currentMonthYM);
         const currentMonthTag = isCurrentMonth 
           ? `<span class="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded">当月·扣减已发</span>`
           : '';
 
         const currentMonthDeductHint = isCurrentMonth
-          ? `<div class="text-[10px] text-amber-700 font-normal">已减${getCurrentMonthSalesDateInfo().rangeLabel}已发: ${item.actualSoldInMonth.toLocaleString()} 件</div>`
+          ? `<div class="text-[10px] text-amber-700 font-normal">已减${getCurrentMonthSalesDateInfo().rangeLabel}已发: ${item.actualSoldInMonth.toLocaleString()} 件 (对比含已发)</div>`
           : '';
 
         tbodyHtml += `
@@ -2099,7 +2148,7 @@
             <td class="py-2.5 px-3 text-center font-mono text-slate-500">${(appState.returnRate * 100).toFixed(1)}%</td>
             <td class="py-2.5 px-3 text-right font-mono text-slate-500">${retQty.toLocaleString()}</td>
             <td class="py-2.5 px-3 text-right font-mono font-black text-indigo-700 bg-indigo-50/50">${actShipment.toLocaleString()}</td>
-            <td class="py-2.5 px-3 text-right font-mono font-bold ${diffVsPrior >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+            <td class="py-2.5 px-3 text-right font-mono font-bold ${diffVsPrior >= 0 ? 'text-emerald-600' : 'text-rose-600'}" title="${isCurrentMonth ? '当月公式：(预计发货+已发) - 同期实际' : '当月预计发货 - 同期实际'}">
               ${diffVsPrior >= 0 ? '+' : ''}${diffVsPrior.toLocaleString()}
             </td>
           </tr>
@@ -2116,7 +2165,6 @@
         weightedAvgGrowthRate = (sumRates / appState.forecastMonths.length) * 100;
       }
       const weightedAvgGrowthText = (weightedAvgGrowthRate >= 0 ? '+' : '') + weightedAvgGrowthRate.toFixed(1) + '%';
-      const totDiffVsPrior = totForecastShipment - totPriorSales;
 
       tfoot.innerHTML = `
         <tr class="text-slate-800">
@@ -2197,6 +2245,9 @@
           ${leadingHeaderHtml}
           ${monthHeadersHtml}
           <th class="py-3 px-2 font-bold text-right text-sky-900 bg-sky-200/50 min-w-[95px]">预计发货量总计</th>
+          <th class="py-3 px-2 font-bold text-right text-slate-700 bg-slate-200/60 min-w-[95px]" title="滚动预测期各月去年同期销量汇总">同期数据总计</th>
+          <th class="py-3 px-2 font-bold text-right text-sky-950 bg-sky-100/80 min-w-[110px]" title="预计发货量总计 + 当月已发">预计发货量(含已发)</th>
+          <th class="py-3 px-2 font-bold text-center text-indigo-900 bg-indigo-100/60 min-w-[95px]" title="预计发货量(含已发) ÷ 同期数据总计 − 1">预计发货量同比</th>
           <th class="py-3 px-2 font-bold text-right text-indigo-900 bg-indigo-50/80 min-w-[115px]">
             预估实际发货量<br><span class="text-[10px] font-normal text-indigo-600">发货量×(1-退货率)</span>
           </th>
@@ -2219,11 +2270,15 @@
       `;
     }
 
-    function renderTableFooter(itemCount, sumForecastSales, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, sumPeriodSales) {
+    function renderTableFooter(itemCount, sumForecastSales, sumSamePeriodSales, sumActualSoldMTD, sumActualShipments, sumWarehouse, sumInTransit, sumTotalStock, sumTargetStock, isCategoryDim, sumPeriodSales) {
       const tfoot = document.getElementById('tableFoot');
       const netTotalDiff = sumTargetStock - (sumTotalStock - sumActualShipments);
       const spanCols = appState.forecastMonths.length * 4;
       const leadingColSpan = isCategoryDim ? 2 : 1;
+
+      const sumForecastWithShipped = sumForecastSales + sumActualSoldMTD;
+      const totalYoY = sumSamePeriodSales > 0 ? (sumForecastWithShipped - sumSamePeriodSales) / sumSamePeriodSales : null;
+      const totalYoYText = totalYoY !== null ? ((totalYoY >= 0 ? '+' : '') + (totalYoY * 100).toFixed(1) + '%') : '-';
 
       const totalWhSellDenom = sumWarehouse + sumPeriodSales;
       const totalWhSellText = totalWhSellDenom > 0 ? ((sumPeriodSales / totalWhSellDenom) * 100).toFixed(1) + '%' : '-';
@@ -2237,6 +2292,9 @@
             全周期滚动预计发货分解汇总 (10月已扣减当月实发)
           </td>
           <td class="py-3 px-2 text-right font-mono font-black text-sky-950 bg-sky-200/50">${sumForecastSales.toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono font-bold text-slate-700 bg-slate-200/60">${sumSamePeriodSales.toLocaleString()}</td>
+          <td class="py-3 px-2 text-right font-mono font-black text-sky-900 bg-sky-200/60" title="全表含已发: ${sumActualSoldMTD.toLocaleString()} 件">${sumForecastWithShipped.toLocaleString()}</td>
+          <td class="py-3 px-2 text-center font-mono font-bold ${totalYoY !== null && totalYoY >= 0 ? 'text-emerald-800 bg-emerald-100/60' : (totalYoY !== null ? 'text-rose-800 bg-rose-100/60' : 'text-slate-400')}">${totalYoYText}</td>
           <td class="py-3 px-2 text-right font-mono text-indigo-900 bg-indigo-100/50">${sumActualShipments.toLocaleString()}</td>
           <td class="py-3 px-2 text-right font-mono">${sumWarehouse.toLocaleString()}</td>
           <td class="py-3 px-2 text-right font-mono">${sumInTransit.toLocaleString()}</td>
@@ -2481,7 +2539,8 @@
         }
 
         const actShipment = Math.round(fcShipment * (1 - appState.returnRate));
-        const diff = fcShipment - spSales;
+        const fullExpected = isCurrentMonth ? (fcShipment + getCurrentMonthActualSold(dimKey)) : fcShipment;
+        const diff = fullExpected - spSales;
         const growthRateText = (growthRate >= 0 ? '+' : '') + Math.round(growthRate * 100) + '%';
 
         breakdownHtml += `
@@ -2495,7 +2554,7 @@
               ${isCurrentMonth ? `<span class="text-[10px] text-amber-700 block font-normal">(全月:${fullForecast})</span>` : ''}
             </td>
             <td class="py-2 px-3 text-right font-mono font-bold text-indigo-700">${actShipment.toLocaleString()}</td>
-            <td class="py-2 px-3 text-right font-mono font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+            <td class="py-2 px-3 text-right font-mono font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}" title="${isCurrentMonth ? '当前月较同期净增减：(预计发货+已发) - 同期实际' : '较同期净增减：预计发货 - 同期实际'}">
               ${diff >= 0 ? '+' : ''}${diff.toLocaleString()}
             </td>
           </tr>
@@ -3191,16 +3250,19 @@
               });
 
               rowObj["预计发货量总计"] = parseNum(tds[2].innerText);
-              rowObj["预估实际发货量"] = parseNum(tds[3].innerText);
-              rowObj["在仓库存"] = parseNum(tds[4].innerText);
-              rowObj["在途库存"] = parseNum(tds[5].innerText);
-              rowObj["总库存"] = parseNum(tds[6].innerText);
-              rowObj["在仓售罄率"] = cleanStr(tds[7].innerText);
-              rowObj["总售罄率"] = cleanStr(tds[8].innerText);
-              rowObj["季末目标库存(自填)"] = parseNum(tds[9].innerText);
-              rowObj["预估季末余量"] = parseNum(tds[10].innerText);
-              rowObj["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tds[11].innerText);
-              rowObj["库存平衡状态"] = cleanStr(tds[12].innerText);
+              rowObj["同期数据总计"] = parseNum(tds[3].innerText);
+              rowObj["预计发货量(含已发)"] = parseNum(tds[4].innerText);
+              rowObj["预计发货量同比"] = cleanStr(tds[5].innerText);
+              rowObj["预估实际发货量"] = parseNum(tds[6].innerText);
+              rowObj["在仓库存"] = parseNum(tds[7].innerText);
+              rowObj["在途库存"] = parseNum(tds[8].innerText);
+              rowObj["总库存"] = parseNum(tds[9].innerText);
+              rowObj["在仓售罄率"] = cleanStr(tds[10].innerText);
+              rowObj["总售罄率"] = cleanStr(tds[11].innerText);
+              rowObj["季末目标库存(自填)"] = parseNum(tds[12].innerText);
+              rowObj["预估季末余量"] = parseNum(tds[13].innerText);
+              rowObj["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tds[14].innerText);
+              rowObj["库存平衡状态"] = cleanStr(tds[15].innerText);
 
               rows.push(rowObj);
               return;
@@ -3226,18 +3288,21 @@
           });
 
           rowObj["预计发货量总计"] = parseNum(tds[colIdx].innerText);
-          rowObj["预估实际发货量"] = parseNum(tds[colIdx + 1].innerText);
-          rowObj["在仓库存"] = parseNum(tds[colIdx + 2].innerText);
-          rowObj["在途库存"] = parseNum(tds[colIdx + 3].innerText);
-          rowObj["总库存"] = parseNum(tds[colIdx + 4].innerText);
-          rowObj["在仓售罄率"] = cleanStr(tds[colIdx + 5].innerText);
-          rowObj["总售罄率"] = cleanStr(tds[colIdx + 6].innerText);
+          rowObj["同期数据总计"] = parseNum(tds[colIdx + 1].innerText);
+          rowObj["预计发货量(含已发)"] = parseNum(tds[colIdx + 2].innerText);
+          rowObj["预计发货量同比"] = cleanStr(tds[colIdx + 3].innerText);
+          rowObj["预估实际发货量"] = parseNum(tds[colIdx + 4].innerText);
+          rowObj["在仓库存"] = parseNum(tds[colIdx + 5].innerText);
+          rowObj["在途库存"] = parseNum(tds[colIdx + 6].innerText);
+          rowObj["总库存"] = parseNum(tds[colIdx + 7].innerText);
+          rowObj["在仓售罄率"] = cleanStr(tds[colIdx + 8].innerText);
+          rowObj["总售罄率"] = cleanStr(tds[colIdx + 9].innerText);
 
-          const targetInput = tds[colIdx + 7].querySelector('input');
-          rowObj["季末目标库存(自填)"] = targetInput ? parseNum(targetInput.value) : parseNum(tds[colIdx + 7].innerText);
-          rowObj["预估季末余量"] = parseNum(tds[colIdx + 8].innerText);
-          rowObj["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tds[colIdx + 9].innerText);
-          rowObj["库存平衡状态"] = cleanStr(tds[colIdx + 10].innerText);
+          const targetInput = tds[colIdx + 10].querySelector('input');
+          rowObj["季末目标库存(自填)"] = targetInput ? parseNum(targetInput.value) : parseNum(tds[colIdx + 10].innerText);
+          rowObj["预估季末余量"] = parseNum(tds[colIdx + 11].innerText);
+          rowObj["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tds[colIdx + 12].innerText);
+          rowObj["库存平衡状态"] = cleanStr(tds[colIdx + 13].innerText);
 
           rows.push(rowObj);
         });
@@ -3245,7 +3310,7 @@
         const tfootTr = table.querySelector('tfoot tr');
         if (tfootTr) {
           const tTds = tfootTr.querySelectorAll('td');
-          if (tTds.length >= 13) {
+          if (tTds.length >= 16) {
             const rowTotal = {};
             if (isCategoryDim) {
               rowTotal["二级类目"] = cleanStr(tTds[0].innerText) || "全表汇总合计";
@@ -3262,16 +3327,19 @@
             });
 
             rowTotal["预计发货量总计"] = parseNum(tTds[2].innerText);
-            rowTotal["预估实际发货量"] = parseNum(tTds[3].innerText);
-            rowTotal["在仓库存"] = parseNum(tTds[4].innerText);
-            rowTotal["在途库存"] = parseNum(tTds[5].innerText);
-            rowTotal["总库存"] = parseNum(tTds[6].innerText);
-            rowTotal["在仓售罄率"] = cleanStr(tTds[7].innerText);
-            rowTotal["总售罄率"] = cleanStr(tTds[8].innerText);
-            rowTotal["季末目标库存(自填)"] = parseNum(tTds[9].innerText);
-            rowTotal["预估季末余量"] = parseNum(tTds[10].innerText);
-            rowTotal["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tTds[11].innerText);
-            rowTotal["库存平衡状态"] = cleanStr(tTds[12].innerText);
+            rowTotal["同期数据总计"] = parseNum(tTds[3].innerText);
+            rowTotal["预计发货量(含已发)"] = parseNum(tTds[4].innerText);
+            rowTotal["预计发货量同比"] = cleanStr(tTds[5].innerText);
+            rowTotal["预估实际发货量"] = parseNum(tTds[6].innerText);
+            rowTotal["在仓库存"] = parseNum(tTds[7].innerText);
+            rowTotal["在途库存"] = parseNum(tTds[8].innerText);
+            rowTotal["总库存"] = parseNum(tTds[9].innerText);
+            rowTotal["在仓售罄率"] = cleanStr(tTds[10].innerText);
+            rowTotal["总售罄率"] = cleanStr(tTds[11].innerText);
+            rowTotal["季末目标库存(自填)"] = parseNum(tTds[12].innerText);
+            rowTotal["预估季末余量"] = parseNum(tTds[13].innerText);
+            rowTotal["溢出差额[目标-(总库存-实际发货)]"] = parseNum(tTds[14].innerText);
+            rowTotal["库存平衡状态"] = cleanStr(tTds[15].innerText);
 
             rows.push(rowTotal);
           }
